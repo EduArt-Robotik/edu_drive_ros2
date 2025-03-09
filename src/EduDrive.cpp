@@ -30,6 +30,7 @@ namespace edu
         }
         delete _pwr_mgmt;
         delete _adapter;
+        delete _extension;
         delete _odometry;
 
     }
@@ -64,8 +65,11 @@ namespace edu
         _tf_broadcaster = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
 
         // CAN devices
-        _adapter = new RPiAdapterBoard(&can, verbosity);
-        _pwr_mgmt = new PowerManagementBoard(&can, verbosity);
+        _adapter   = new RPiAdapterBoard(&can, verbosity);
+        _extension = new RPiExtensionBoard(&can, verbosity);
+        _pwr_mgmt  = new PowerManagementBoard(&can, verbosity);
+
+	_extension->setServo(0, 45.f);
 
         _vMax = 0.f;
 
@@ -182,6 +186,11 @@ namespace edu
         if (!joy->buttons[11])
             left = 0;
 
+	if(joy->buttons[2])
+	    _extension->setServo(0, 45.f);
+	else if(joy->buttons[3])
+	    _extension->setServo(0, 225.f);
+	    
         static int32_t btn9Prev = joy->buttons[9];
         static int32_t btn10Prev = joy->buttons[10];
 

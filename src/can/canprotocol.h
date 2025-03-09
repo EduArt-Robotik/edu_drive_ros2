@@ -22,6 +22,7 @@ namespace edu
 #define SYSID_PWRMGMT     0b101
 
 #define RPI_ADAPTER      0b0000001
+#define RPI_EXTENSION    0b0000010
 #define IOT_SHIELD       0b0000001
 #define NODEID_HEADLEFT  0b0000001
 #define NODEID_HEADRIGHT 0b0000010

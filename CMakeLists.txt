@@ -15,7 +15,7 @@ find_package(std_srvs REQUIRED)
 find_package(tf2_ros REQUIRED)
 find_package(tf2 REQUIRED)
 
-add_executable(${PROJECT_NAME}_node src/edu_drive_node.cpp src/EduDrive.cpp src/MotorController.cpp src/RPiAdapterBoard.cpp src/PowerManagementBoard.cpp src/Odometry.cpp src/can/canprotocol.cpp src/can/SocketCAN.cpp src/can/SocketCANObserver.cpp src/Matrix.cpp)
+add_executable(${PROJECT_NAME}_node src/edu_drive_node.cpp src/EduDrive.cpp src/MotorController.cpp src/RPiAdapterBoard.cpp src/RPiExtensionBoard.cpp src/PowerManagementBoard.cpp src/Odometry.cpp src/can/canprotocol.cpp src/can/SocketCAN.cpp src/can/SocketCANObserver.cpp src/Matrix.cpp)
 
 ament_target_dependencies(edu_drive_ros2_node sensor_msgs std_srvs rclcpp tf2 tf2_ros)
 

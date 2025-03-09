@@ -13,6 +13,7 @@
 #include "std_srvs/srv/set_bool.hpp"
 #include "MotorController.h"
 #include "RPiAdapterBoard.h"
+#include "RPiExtensionBoard.h"
 #include "PowerManagementBoard.h"
 #include <rclcpp/publisher.hpp>
 #include "Odometry.h"
@@ -122,6 +123,7 @@ private:
 
     std::vector<MotorController*>  _mc;            // Vector containing pointer to all motor controller instances
     RPiAdapterBoard*               _adapter;       // Adapter board
+    RPiExtensionBoard*             _extension;     // Extension board
     PowerManagementBoard*          _pwr_mgmt;      // Power management board
     Odometry*                      _odometry;      // Odometry model of robot
 
