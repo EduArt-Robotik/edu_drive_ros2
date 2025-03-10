@@ -52,10 +52,10 @@ namespace edu
         _pubRPM     = this->create_publisher<std_msgs::msg::Float32MultiArray>("rpm", 1);
 
         // Publisher of carrier shield
-        _pubTemp             = this->create_publisher<std_msgs::msg::Float32>("temperature", 1);
-        _pubVoltageAdapter   = this->create_publisher<std_msgs::msg::Float32>("voltageAdapter", 1);
-        _pubOrientation      = this->create_publisher<geometry_msgs::msg::PoseStamped>("pose", 1);
-        _pubAccel            = this->create_publisher<geometry_msgs::msg::AccelStamped>("accel", 1);
+        _pubTemp           = this->create_publisher<std_msgs::msg::Float32>("temperature", 1);
+        _pubVoltageAdapter = this->create_publisher<std_msgs::msg::Float32>("voltageAdapter", 1);
+        _pubOrientation    = this->create_publisher<geometry_msgs::msg::PoseStamped>("pose", 1);
+        _pubAccel          = this->create_publisher<geometry_msgs::msg::AccelStamped>("accel", 1);
 		
         // Publisher of power management shield
         _pubVoltagePwrMgmt = this->create_publisher<std_msgs::msg::Float32>("voltagePwrMgmt", 1);
@@ -69,7 +69,8 @@ namespace edu
         _extension = new RPiExtensionBoard(&can, verbosity);
         _pwr_mgmt  = new PowerManagementBoard(&can, verbosity);
 
-	_extension->setServo(0, 45.f);
+        _servoPos = 45.0;
+        _extension->setServo(0, _servoPos);
 
         _vMax = 0.f;
 
@@ -177,21 +178,41 @@ namespace edu
     void EduDrive::joyCallback(const sensor_msgs::msg::Joy::SharedPtr joy)
     {
         // Assignment of joystick axes to motor commands
-        float fwd = joy->axes[1];                    // Range of values [-1:1]
-        float left = joy->axes[0];                   // Range of values [-1:1]
-        float turn = joy->axes[2];                   // Range of values [-1:1]
-        float throttle = (joy->axes[3] + 1.0) / 2.0; // Range of values [0:1]
+        float fwd      = joy->axes[1];               // Range of values [-1:1]
+        float left     = joy->axes[0];               // Range of values [-1:1]
+        float turn     = joy->axes[2];               // Range of values [-1:1]
+        float throttle = (joy->axes[3] + 1.0) / 2.0; // Range of values  [0:1]
 
         // Enable movement in the direction of the y-axis only when the button 12 is pressed
         if (!joy->buttons[11])
             left = 0;
 
-	if(joy->buttons[2])
-	    _extension->setServo(0, 45.f);
-	else if(joy->buttons[3])
-	    _extension->setServo(0, 225.f);
-	    
-        static int32_t btn9Prev = joy->buttons[9];
+        // Avoid sending CAN messages, if servo keeps its position
+        bool servoChangesPos = false;
+
+        // Forward / Backward basic orientation
+        if(joy->buttons[2])
+        {
+            _servoPos = 45.0;
+            servoChangesPos = true;
+        }
+        else if(joy->buttons[3])
+        {
+            _servoPos = 225.0;
+            servoChangesPos = true;
+        }
+
+        // ToDo: Add coolie hat logic
+
+        if(_servoPos < 0.0)
+            _servoPos = 0.0;
+        if(_servoPos > 270.0)
+            _servoPos = 270.0;
+
+        if(servoChangesPos)
+            _extension->setServo(0, _servoPos);
+
+        static int32_t btn9Prev  = joy->buttons[9];
         static int32_t btn10Prev = joy->buttons[10];
 
         if (joy->buttons[9] && !btn9Prev)
@@ -203,10 +224,10 @@ namespace edu
             enable();
         }
 
-        btn9Prev = joy->buttons[9];
-        btn10Prev = joy->buttons[10];
+        btn9Prev    = joy->buttons[9];
+        btn10Prev   = joy->buttons[10];
 
-        float vFwd = throttle * fwd * _vMax;
+        float vFwd  = throttle * fwd  * _vMax;
         float vLeft = throttle * left * _vMax;
         float omega = throttle * turn * _omegaMax;
 
@@ -223,18 +244,18 @@ namespace edu
         // suppress warning about unused variable header
         (void)header;
 
-       if(request->data==true)
-       {
-           RCLCPP_INFO(this->get_logger(), "%s", "Enabling robot");
-           enable();
-       }
-       else
-       {
-           RCLCPP_INFO(this->get_logger(),  "%s", "Disabling robot");
-           disable();
-       }
-       response->success = true;
-       return true;
+        if(request->data==true)
+        {
+            RCLCPP_INFO(this->get_logger(), "%s", "Enabling robot");
+            enable();
+        }
+        else
+        {
+            RCLCPP_INFO(this->get_logger(),  "%s", "Disabling robot");
+            disable();
+        }
+        response->success = true;
+        return true;
     }
 
     void EduDrive::controlMotors(float vFwd, float vLeft, float omega)

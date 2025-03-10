@@ -129,6 +129,7 @@ private:
 
     double _vMax;
     double _omegaMax;
+    double _servoPos;
 
     bool _enabled;
     bool _using_pwr_mgmt;

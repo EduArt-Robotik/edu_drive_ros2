@@ -43,9 +43,9 @@ private:
 
     can_frame        _cf;
 
-    int32_t          _inputAddress;     // Input address (CAN ID) of carrier board
+    int32_t          _inputAddress;     // Input address (CAN ID) of extension board
 
-    int32_t          _outputAddress;    // Output address (CAN ID) of carrier board
+    int32_t          _outputAddress;    // Output address (CAN ID) of extension board
 
     int32_t          _broadcastAddress; // Broadcast address for the distribution of CAN data to multiple nodes
     
