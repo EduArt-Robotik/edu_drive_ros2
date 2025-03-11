@@ -187,29 +187,30 @@ namespace edu
         if (!joy->buttons[11])
             left = 0;
 
-        // Avoid sending CAN messages, if servo keeps its position
-        bool servoChangesPos = false;
-
         // Forward / Backward basic orientation
+        double servoPos = _servoPos;
         if(joy->buttons[2])
         {
             _servoPos = 45.0;
-            servoChangesPos = true;
         }
         else if(joy->buttons[3])
         {
             _servoPos = 225.0;
-            servoChangesPos = true;
         }
 
-        // ToDo: Add coolie hat logic
-
+        // Coolie hat fine positioning
+        if(joy->axes[4]==1)
+            _servoPos += 1.0;
+        if(joy->axes[4]==-1)
+	        _servoPos -= 1.0;
+	    
         if(_servoPos < 0.0)
             _servoPos = 0.0;
         if(_servoPos > 270.0)
             _servoPos = 270.0;
 
-        if(servoChangesPos)
+        // Avoid sending CAN messages, if servo keeps its position
+        if(servoPos != _servoPos)
             _extension->setServo(0, _servoPos);
 
         static int32_t btn9Prev  = joy->buttons[9];
@@ -310,13 +311,11 @@ namespace edu
                     }
                     else
                     {
-                        //std::cout << "#EduDrive Error synchronizing with device" << (*it)->getCanId() << std::endl;
                         RCLCPP_WARN_STREAM(this->get_logger(), "#EduDrive Error synchronizing with device" << (*it)->getCanId());   
                     }
                 }
                 else
                 {
-                    //std::cout << "#EduDrive Low voltage on drive power supply rail for device " << (*it)->getCanId() << std::endl;
                     RCLCPP_WARN_STREAM(this->get_logger(), "#EduDrive Low voltage on drive power supply rail for device " << (*it)->getCanId());
                     
                     (*it)->deinit();
