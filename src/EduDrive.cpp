@@ -212,7 +212,7 @@ namespace edu
             _servoPos = 270.0;
 
         // Avoid sending CAN messages, if servos keep their position
-        int bank = 1;
+        int bank = 0;
         int channels[4] = {1, 2, 3, 4};
         if(servoPos != _servoPos)
         {
