@@ -304,7 +304,7 @@ namespace edu
         for (std::vector<MotorController *>::iterator it = std::begin(_mc); it != std::end(_mc); ++it)
         {        
 	        controllersInitialized = controllersInitialized && (*it)->isInitialized();
-	     }
+	}
         
         for (std::vector<MotorController *>::iterator it = std::begin(_mc); it != std::end(_mc); ++it)
         {
@@ -347,6 +347,7 @@ namespace edu
             {
                 _enabled &= msgEnabled.data[i];
             }
+            _extension->sendEnabledState(_enabled);
         }
 
         _odometry->update(static_cast<std::uint64_t>(stampReceived.nanoseconds()), edu::Vec(msgRPM.data.begin(), msgRPM.data.end()));

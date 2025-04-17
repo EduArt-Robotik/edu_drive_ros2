@@ -33,9 +33,16 @@ public:
    * @param[in] bank number of servo bank (servo 1-4 is bank 0, servo 5-8 is bank 1)
    * @param[in] channel Channel of servo motor connector, valid values: [1, 8]
    * @param[in] angle Desired angle, valid values: [0, 270]
-   * @return success state
+   * @return success state of CAN transmission
    */
   bool setServos(int bank, int channels[4], double angles[4]);
+  
+  /**
+   * @brief Send enable state for visualization (LEDs)
+   * @param[in] enabled joint enabled state of all motors
+   * @return success state of CAN transmission
+   */
+  bool sendEnabledState(bool enabled);
   
 
 private:

@@ -47,4 +47,11 @@ bool RPiExtensionBoard::setServos(int bank, int channels[4], double angles[4])
   }
 }
 
+bool RPiExtensionBoard::sendEnabledState(bool enabled)
+{
+  _cf.can_dlc = 1;
+  _cf.data[0] = enabled;
+  return _can->send(&_cf);
+}
+
 } // namespace
