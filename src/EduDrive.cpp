@@ -70,7 +70,9 @@ namespace edu
         _pwr_mgmt  = new PowerManagementBoard(&can, verbosity);
 
         _servoPos = 45.0;
-        _extension->setServo(0, _servoPos);
+        int channels[4] = {1, 2, 3, 4};
+        double angles[4] = {_servoPos, _servoPos, _servoPos, _servoPos};
+        _extension->setServos(0, channels, angles);
 
         _vMax = 0.f;
 
@@ -209,10 +211,18 @@ namespace edu
         if(_servoPos > 270.0)
             _servoPos = 270.0;
 
-        // Avoid sending CAN messages, if servo keeps its position
+        // Avoid sending CAN messages, if servos keep their position
+        int bank = 1;
+        int channels[4] = {1, 2, 3, 4};
         if(servoPos != _servoPos)
-            _extension->setServo(0, _servoPos);
-
+        {
+            double angles[4];
+            angles[0] = _servoPos;
+            angles[1] = _servoPos;
+            angles[2] = _servoPos;
+            angles[3] = _servoPos;
+            _extension->setServos(bank, channels, angles);
+	}
         static int32_t btn9Prev  = joy->buttons[9];
         static int32_t btn10Prev = joy->buttons[10];
 

@@ -30,11 +30,12 @@ public:
   
   /**
    * @brief Set angle of servo motor
-   * @param[in] channel Channel of servo motor connector
-   * @param[in] angle Desired angle
+   * @param[in] bank number of servo bank (servo 1-4 is bank 0, servo 5-8 is bank 1)
+   * @param[in] channel Channel of servo motor connector, valid values: [1, 8]
+   * @param[in] angle Desired angle, valid values: [0, 270]
    * @return success state
    */
-  bool setServo(int channel, double angle);
+  bool setServos(int bank, int channels[4], double angles[4]);
   
 
 private:

@@ -24,12 +24,27 @@ RPiExtensionBoard::~RPiExtensionBoard()
 
 }
 
-bool RPiExtensionBoard::setServo(int channel, double angle)
+bool RPiExtensionBoard::setServos(int bank, int channels[4], double angles[4])
 {
-  _cf.can_dlc = 1;
-  uint8_t uAngle = uint8_t((angle / 270.f) * 255.f);
-  _cf.data[0] = uAngle;
-  return _can->send(&_cf);
+  if(bank==0 || bank==1)
+  {
+    _cf.can_dlc = 5;
+    _cf.data[0] = bank; // bank 0 relates to servos 1 to 4, bank 1 to servos 5 to 8
+    for(int ch=0; ch<4; ch++)
+    {
+      _cf.data[ch+1] = 255; // this values means, to not change servo position (values > 250 are ignored)
+      if(channels[ch]>0 && channels[ch]<=4)
+      {
+        uint8_t uAngle = uint8_t((angles[ch] / 270.f) * 250.f);
+        _cf.data[channels[ch]] = uAngle;
+      }
+    }
+    return _can->send(&_cf);
+  }
+  else
+  {
+    return false;
+  }
 }
 
 } // namespace
