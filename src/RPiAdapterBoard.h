@@ -52,6 +52,12 @@ public:
    */
   void getAcceleration(double acc[3]);
 
+    /**
+   * @brief Get raw angular velocity values of IMU
+   * @param[out] vel Angular velocity in x-, y- and z-dimension
+   */
+  void getAngularVelocity(double vel[3]);
+
 private:
 
     void notify(struct can_frame* frame);
@@ -73,6 +79,8 @@ private:
     double           _voltageSys;       // Voltage supply of adapter board
 
     double           _acceleration[3];  // Acceleration in x-, y-, z-dimension.
+
+    double           _angular_velocity[3];  // Acceleration in x-, y-, z-dimension.
     
     bool             _verbosity;        // Set this flag to true via the Constructor to get information via cout
     
