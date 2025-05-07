@@ -29,13 +29,11 @@ public:
   ~RPiExtensionBoard();
   
   /**
-   * @brief Set angle of servo motor
-   * @param[in] bank number of servo bank (servo 1-4 is bank 0, servo 5-8 is bank 1)
-   * @param[in] channel Channel of servo motor connector, valid values: [1, 8]
+   * @brief Set angle of servo motors
    * @param[in] angle Desired angle, valid values: [0, 270]
    * @return success state
    */
-  bool setServos(int bank, int channels[4], double angles[4]);
+  bool setServos(double angles[8]);
   
 
 private:

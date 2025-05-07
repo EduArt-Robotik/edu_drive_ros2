@@ -69,11 +69,6 @@ namespace edu
         _extension = new RPiExtensionBoard(&can, verbosity);
         _pwr_mgmt  = new PowerManagementBoard(&can, verbosity);
 
-        _servoPos = 45.0;
-        int channels[4] = {1, 2, 3, 4};
-        double angles[4] = {_servoPos, _servoPos, _servoPos, _servoPos};
-        _extension->setServos(0, channels, angles);
-
         _vMax = 0.f;
 
         bool isKinematicsValid = true;
@@ -212,16 +207,19 @@ namespace edu
             _servoPos = 270.0;
 
         // Avoid sending CAN messages, if servos keep their position
-        int bank = 0;
-        int channels[4] = {1, 2, 3, 4};
         if(servoPos != _servoPos)
         {
-            double angles[4];
+            double angles[8];
             angles[0] = _servoPos;
             angles[1] = _servoPos;
-            angles[2] = _servoPos;
-            angles[3] = _servoPos;
-            _extension->setServos(bank, channels, angles);
+            angles[2] = 255;
+            angles[3] = 255;
+            // these values mean, to not change servo position (values > 250 are ignored)
+            angles[4] = 255;
+            angles[5] = 255;
+            angles[6] = 255;
+            angles[7] = 255;
+            _extension->setServos(angles);
 	}
         static int32_t btn9Prev  = joy->buttons[9];
         static int32_t btn10Prev = joy->buttons[10];
