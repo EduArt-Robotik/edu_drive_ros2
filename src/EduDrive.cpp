@@ -4,8 +4,6 @@
 #include "std_msgs/msg/byte_multi_array.hpp"
 #include "std_msgs/msg/float32.hpp"
 #include "sensor_msgs/msg/imu.hpp"
-#include "geometry_msgs/msg/pose_stamped.hpp"
-#include "geometry_msgs/msg/accel_stamped.hpp"
 #include <fcntl.h>
 #include <geometry_msgs/msg/detail/accel_stamped__struct.hpp>
 #include <linux/gpio.h>
@@ -52,10 +50,9 @@ namespace edu
         _pubRPM     = this->create_publisher<std_msgs::msg::Float32MultiArray>("rpm", 1);
 
         // Publisher of carrier shield
-        _pubTemp           = this->create_publisher<std_msgs::msg::Float32>("temperature", 1);
-        _pubVoltageAdapter = this->create_publisher<std_msgs::msg::Float32>("voltageAdapter", 1);
-        _pubOrientation    = this->create_publisher<geometry_msgs::msg::PoseStamped>("pose", 1);
-        _pubAccel          = this->create_publisher<geometry_msgs::msg::AccelStamped>("accel", 1);
+        _pubTemp             = this->create_publisher<std_msgs::msg::Float32>("temperature", 1);
+        _pubVoltageAdapter   = this->create_publisher<std_msgs::msg::Float32>("voltageAdapter", 1);
+        _pubImu              = this->create_publisher<sensor_msgs::msg::Imu>("imu", 1);
 		
         // Publisher of power management shield
         _pubVoltagePwrMgmt = this->create_publisher<std_msgs::msg::Float32>("voltagePwrMgmt", 1);
@@ -302,7 +299,7 @@ namespace edu
         for (std::vector<MotorController *>::iterator it = std::begin(_mc); it != std::end(_mc); ++it)
         {        
 	        controllersInitialized = controllersInitialized && (*it)->isInitialized();
-	     }
+	}
         
         for (std::vector<MotorController *>::iterator it = std::begin(_mc); it != std::end(_mc); ++it)
         {
@@ -345,6 +342,7 @@ namespace edu
             {
                 _enabled &= msgEnabled.data[i];
             }
+            _extension->sendEnabledState(_enabled);
         }
 
         _odometry->update(static_cast<std::uint64_t>(stampReceived.nanoseconds()), edu::Vec(msgRPM.data.begin(), msgRPM.data.end()));
@@ -376,32 +374,24 @@ namespace edu
         msgVoltageAdapter.data = _adapter->getVoltageSys();
         _pubVoltageAdapter->publish(msgVoltageAdapter);
 
-        double q[4];
+        double q[4], a[3], v[3];
         _adapter->getOrientation(q);
-        geometry_msgs::msg::PoseStamped msgOrientation;
-        //Sequence number not supported in std_msgs::msg::header in ros2
-        //static unsigned int seq = 0;
-        //msgOrientation.header.seq = seq++;
-        msgOrientation.header.stamp = stampReceived;
-        msgOrientation.header.frame_id = "base_link";
-        msgOrientation.pose.position.x = 0;
-        msgOrientation.pose.position.y = 0;
-        msgOrientation.pose.position.z = 0;
-        msgOrientation.pose.orientation.w = q[0];
-        msgOrientation.pose.orientation.x = q[1];
-        msgOrientation.pose.orientation.y = q[2];
-        msgOrientation.pose.orientation.z = q[3];
-        _pubOrientation->publish(msgOrientation);
-
-        double a[3];
         _adapter->getAcceleration(a);
-        geometry_msgs::msg::AccelStamped msgAccel;
-        msgAccel.header.stamp = msgOrientation.header.stamp;
-        msgAccel.header.frame_id = msgOrientation.header.frame_id;
-        msgAccel.accel.linear.x = a[0];
-        msgAccel.accel.linear.y = a[1];
-        msgAccel.accel.linear.z = a[2];
-        _pubAccel->publish(msgAccel);
+        _adapter->getAngularVelocity(v);
+        sensor_msgs::msg::Imu msgImu;
+        msgImu.header.stamp = stampReceived;
+        msgImu.header.frame_id = "base_link";
+        msgImu.orientation.w = q[0];
+        msgImu.orientation.x = q[1];
+        msgImu.orientation.y = q[2];
+        msgImu.orientation.z = q[3];
+        msgImu.linear_acceleration.x = a[0];
+        msgImu.linear_acceleration.y = a[1];
+        msgImu.linear_acceleration.z = a[2];
+        msgImu.angular_velocity.x = v[0];
+        msgImu.angular_velocity.y = v[1];
+        msgImu.angular_velocity.z = v[2];
+        _pubImu->publish(msgImu);
 
         std_msgs::msg::Float32 msgVoltagePwrMgmt;
         msgVoltagePwrMgmt.data = voltagePwrMgmt;

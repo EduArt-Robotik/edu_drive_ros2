@@ -21,7 +21,7 @@ def generate_launch_description():
       executable='edu_drive_ros2_node',
       name='edu_drive_ros2_node',
       parameters=[parameter_file],
-      namespace=os.environ.get('EDU_ROBOT_NAMESPACE', "eduard"),
+      #namespace=os.environ.get('EDU_ROBOT_NAMESPACE', "eduard"),
       output='screen'
     )  
     

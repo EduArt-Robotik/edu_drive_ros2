@@ -23,6 +23,10 @@ RPiAdapterBoard::RPiAdapterBoard(SocketCAN* can, bool verbosity)
   _acceleration[1] = 0.0;
   _acceleration[2] = 0.0;
 
+  _angular_velocity[0] = 0.0;
+  _angular_velocity[1] = 0.0;
+  _angular_velocity[2] = 0.0;
+
   makeCanStdID(SYSID_RPI_ADAPTER, RPI_ADAPTER, &_inputAddress, &_outputAddress, &_broadcastAddress);
   _cf.can_id = _inputAddress;
   if(verbosity)
@@ -70,6 +74,13 @@ void RPiAdapterBoard::getAcceleration(double acc[3])
   acc[2] = _acceleration[2];
 }
 
+void RPiAdapterBoard::getAngularVelocity(double vel[3])
+{
+  vel[0] = _angular_velocity[0];
+  vel[1] = _angular_velocity[1];
+  vel[2] = _angular_velocity[2];
+}
+
 void RPiAdapterBoard::notify(struct can_frame* frame)
 {
   uint8_t* data = frame->data;
@@ -101,19 +112,39 @@ void RPiAdapterBoard::notify(struct can_frame* frame)
       
     _init = true;
   }
-  else if(frame->can_dlc==6) // Receive raw acceleration measurement
+  else if(frame->can_dlc==7) // Receive IMU measurements
   {
-    int16_t acc[3];
-    acc[0] = ((data[0] << 8) & 0xFF00) | data[1];
-    acc[1] = ((data[2] << 8) & 0xFF00) | data[3];
-    acc[2] = ((data[4] << 8) & 0xFF00) | data[5];
-    _acceleration[0] = ((double)acc[0]) / 1000.0;
-    _acceleration[1] = ((double)acc[1]) / 1000.0;
-    _acceleration[2] = ((double)acc[2]) / 1000.0;
+    // linear acceleration
+    if(frame->data[0] == 1)
+    {
+      int16_t acc[3];
+      acc[0] = ((data[1] << 8) & 0xFF00) | data[2];
+      acc[1] = ((data[3] << 8) & 0xFF00) | data[4];
+      acc[2] = ((data[5] << 8) & 0xFF00) | data[6];
+      _acceleration[0] = ((double)acc[0]) / 1000.0;
+      _acceleration[1] = ((double)acc[1]) / 1000.0;
+      _acceleration[2] = ((double)acc[2]) / 1000.0;
+    }
+    //angular velocity
+    else if(frame->data[0] == 2)
+    {
+      int16_t vel[3];
+      vel[0] = ((data[1] << 8) & 0xFF00) | data[2];
+      vel[1] = ((data[3] << 8) & 0xFF00) | data[4];
+      vel[2] = ((data[5] << 8) & 0xFF00) | data[6];
+      _angular_velocity[0] = ((double)vel[0]) / 1000.0;
+      _angular_velocity[1] = ((double)vel[1]) / 1000.0;
+      _angular_velocity[2] = ((double)vel[2]) / 1000.0;
+    }
+    else
+    {
+      std::cout << "RPiAdapterBoard::notify: Warning - wrong protocol in acceleration message." << std::endl; //ToDo: Adapt this node to new firmware
+    }
+
   }
   else
   {
-    //std::cout << "RPiAdapterBoard::notify: Warning - wrong message format received." << std::endl; //ToDo: Adapt this node to new firmware
+    std::cout << "RPiAdapterBoard::notify: Warning - wrong message format received." << std::endl; //ToDo: Adapt this node to new firmware
   }
 }
 

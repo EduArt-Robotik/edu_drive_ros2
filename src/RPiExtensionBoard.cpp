@@ -35,4 +35,11 @@ bool RPiExtensionBoard::setServos(double angles[8])
   return _can->send(&_cf);
 }
 
+bool RPiExtensionBoard::sendEnabledState(bool enabled)
+{
+  _cf.can_dlc = 1;
+  _cf.data[0] = enabled;
+  return _can->send(&_cf);
+}
+
 } // namespace

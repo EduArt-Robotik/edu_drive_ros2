@@ -31,9 +31,16 @@ public:
   /**
    * @brief Set angle of servo motors
    * @param[in] angle Desired angle, valid values: [0, 270]
-   * @return success state
+   * @return success state of CAN transmission
    */
   bool setServos(double angles[8]);
+  
+  /**
+   * @brief Send enable state for visualization (LEDs)
+   * @param[in] enabled joint enabled state of all motors
+   * @return success state of CAN transmission
+   */
+  bool sendEnabledState(bool enabled);
   
 
 private:
