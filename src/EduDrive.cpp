@@ -209,13 +209,13 @@ namespace edu
             double angles[8];
             angles[0] = _servoPos;
             angles[1] = _servoPos;
-            angles[2] = 255;
-            angles[3] = 255;
-            // these values mean, to not change servo position (values > 250 are ignored)
-            angles[4] = 255;
-            angles[5] = 255;
-            angles[6] = 255;
-            angles[7] = 255;
+            // these values mean, to not change servo position (values > 270 are ignored)
+            angles[2] = 275;
+            angles[3] = 275;
+            angles[4] = 275;
+            angles[5] = 275;
+            angles[6] = 275;
+            angles[7] = 275;
             _extension->setServos(angles);
 	}
         static int32_t btn9Prev  = joy->buttons[9];
