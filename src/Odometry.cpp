@@ -190,4 +190,4 @@ int Odometry::propagate_position(edu::Vec twistVec)
     return status;
 }
 
-} //namespace
+}

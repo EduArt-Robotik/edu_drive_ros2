@@ -1,11 +1,11 @@
-#ifndef _SOCKETCAN_H_
-#define _SOCKETCAN_H_
+#pragma once
 
 #include <linux/can.h>
 #include <linux/can/raw.h>
 #include <string>
 #include <vector>
 #include <thread>
+#include <memory>
 #include <mutex>
 
 #include "SocketCANObserver.h"
@@ -62,7 +62,7 @@ public:
    * Start listener thread.
    * @return success==true, failure==false (e.g. when listener is already running)
    */
-  bool startListener();
+  bool startListener(int timeout_ms = 1000);
 
   /**
    * Terminate listener thread
@@ -85,13 +85,13 @@ private:
 
   bool _shutDownListener;
 
+  bool _portOpen;
+
   std::vector<SocketCANObserver*> _observers;
 
-  std::thread* _thread;
+  std::unique_ptr<std::thread> _thread;
 
   std::mutex _mutex;
 };
 
-} // namespace
-
-#endif //_SOCKETCAN_H_
+}

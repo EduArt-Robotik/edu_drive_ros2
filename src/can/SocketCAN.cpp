@@ -1,12 +1,17 @@
 #include "SocketCAN.h"
 
 #include <fcntl.h>
-#include <sys/ioctl.h>
 #include <net/if.h>
-#include <iostream>
 #include <unistd.h>
-#include <string.h>
+#include <sys/ioctl.h>
 #include <sys/time.h>
+
+#include <iostream>
+#include <cstring>
+#include <thread>
+#include <chrono>
+
+using namespace std::chrono_literals;
 
 namespace edu
 {
@@ -16,13 +21,14 @@ SocketCAN::SocketCAN(std::string devFile)
   _soc = 0;
   _listenerIsRunning = false;
   _shutDownListener  = false;
-
-  if(!openPort(devFile.c_str()))
+  _portOpen = openPort(devFile.c_str());
+  if(!_portOpen)
     std::cout << "WARNING: Cannot open CAN device interface: " << devFile << std::endl;
 }
 
 SocketCAN::~SocketCAN()
 {
+  stopListener();
   closePort();
 }
 
@@ -53,7 +59,7 @@ bool SocketCAN::openPort(const char *port)
   }
 
   addr.can_family = AF_CAN;
-  strcpy(ifr.ifr_name, port);
+  std::strcpy(ifr.ifr_name, port);
 
   if (ioctl(_soc, SIOCGIFINDEX, &ifr) < 0)
   {
@@ -99,16 +105,20 @@ bool SocketCAN::send(struct can_frame* frame)
   }
 }
 
-bool SocketCAN::startListener()
+bool SocketCAN::startListener(int timeout_ms)
 {
-  if(_listenerIsRunning) return false;
+  if(!_portOpen || _listenerIsRunning) return false;
 
-  _thread = new std::thread(&SocketCAN::listener, this);
+  _thread = std::make_unique<std::thread>(&SocketCAN::listener, this);
 
-  while(!_listenerIsRunning)
-    usleep(100);
+  int watchdog = 0;
+  while(!_listenerIsRunning && (watchdog < timeout_ms))
+  {
+    std::this_thread::sleep_for(1ms);
+    watchdog += 1;
+  }
 
-  return true;
+  return watchdog < timeout_ms;
 }
 
 bool SocketCAN::listener()
@@ -147,7 +157,7 @@ bool SocketCAN::listener()
     }
     _mutex.unlock();
 
-    usleep(100);
+    std::this_thread::sleep_for(100us);
   }
   std::cout << "# Listener stop" << std::endl;
 
@@ -158,10 +168,7 @@ bool SocketCAN::listener()
 void SocketCAN::stopListener()
 {
   _shutDownListener = true;
-
   _thread->join();
-
-  delete _thread;
 }
 
 bool SocketCAN::closePort()
@@ -174,4 +181,4 @@ bool SocketCAN::closePort()
   return retval;
 }
 
-} // namespace
+}

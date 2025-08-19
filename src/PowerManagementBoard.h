@@ -1,5 +1,4 @@
-#ifndef _POWERMANAGEMENTBOARD_H_
-#define _POWERMANAGEMENTBOARD_H_
+#pragma once
 
 #include "can/SocketCAN.h"
 
@@ -75,6 +74,4 @@ private:
     bool             _init;
 };
 
-} // namespace
-
-#endif // _POWERMANAGEMENTBOARD_H_
+}

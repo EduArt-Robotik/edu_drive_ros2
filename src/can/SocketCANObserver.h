@@ -1,5 +1,4 @@
-#ifndef _SOCKETCANOBSERVER_H_
-#define _SOCKETCANOBSERVER_H_
+#pragma once
 
 #include <linux/can.h>
 
@@ -61,6 +60,4 @@ private:
   long _usec;
 };
 
-} // namespace
-
-#endif // _SOCKETCANOBSERVER_H_
+}

@@ -1,5 +1,4 @@
-#ifndef __MATRIX_H
-#define __MATRIX_H
+#pragma once
 
 #include <vector>
 #include <string>
@@ -133,6 +132,4 @@ private:
 
 };
 
-} // namespace
-
-#endif // __MATRIX_H
+}

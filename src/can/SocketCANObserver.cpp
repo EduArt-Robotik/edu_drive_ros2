@@ -52,4 +52,4 @@ bool SocketCANObserver::checkConnectionStatus(unsigned int timeoutInMillis)
     return elapsed < timeoutInMillis;
 }
 
-} // namespace
+}

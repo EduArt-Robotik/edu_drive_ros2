@@ -1,5 +1,4 @@
-#ifndef _RPIEXTENSIONBOARD_H_
-#define _RPIEXTENSIONBOARD_H_
+#pragma once
 
 #include "can/SocketCAN.h"
 
@@ -59,6 +58,4 @@ private:
     
 };
 
-} // namespace
-
-#endif // _RPIEXTENSIONBOARD_H_
+}

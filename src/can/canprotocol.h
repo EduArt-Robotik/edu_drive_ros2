@@ -5,10 +5,9 @@
  *      Author: Stefan May
  */
 
-#ifndef CANIDS_H_
-#define CANIDS_H_
+#pragma once
 
-#include <stdint.h>
+#include <cstdint>
 
 namespace edu
 {
@@ -97,9 +96,7 @@ namespace edu
  */
 #define CAN_QUATERNION  100 // Quaternion representing orientation
 
-void makeCanStdID(int32_t sysID, int32_t nodeID, int32_t* inputAddress, int32_t* outputAddress, int32_t* broadcastAddress);
+void makeCanStdID(std::int32_t sysID, std::int32_t nodeID, std::int32_t* inputAddress, std::int32_t* outputAddress, std::int32_t* broadcastAddress);
 
-} // namespace
-
-#endif /* CANIDS_H_ */
+}
 

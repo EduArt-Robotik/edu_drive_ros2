@@ -138,14 +138,14 @@ void RPiAdapterBoard::notify(struct can_frame* frame)
     }
     else
     {
-      std::cout << "RPiAdapterBoard::notify: Warning - wrong protocol in acceleration message." << std::endl; //ToDo: Adapt this node to new firmware
+      std::cout << "RPiAdapterBoard::notify: Warning - wrong protocol in acceleration message." << std::endl;
     }
 
   }
   else
   {
-    std::cout << "RPiAdapterBoard::notify: Warning - wrong message format received." << std::endl; //ToDo: Adapt this node to new firmware
+    std::cout << "RPiAdapterBoard::notify: Warning - wrong message format received." << std::endl;
   }
 }
 
-} // namespace
+}
