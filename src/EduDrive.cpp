@@ -106,7 +106,7 @@ void EduDrive::run()
 {
     _lastCmd = this->get_clock()->now();
 
-    rclcpp::TimerBase::SharedPtr timerReceiveCAN = this->create_wall_timer(std::chrono::milliseconds(20), std::bind(&EduDrive::receiveCAN, this));
+    rclcpp::TimerBase::SharedPtr timerReceiveCAN = this->create_wall_timer(std::chrono::milliseconds(20), std::bind(&EduDrive::hardwareWorker, this));
     rclcpp::TimerBase::SharedPtr timerCheckLaggyConnection = this->create_wall_timer(std::chrono::milliseconds(500), std::bind(&EduDrive::checkLaggyConnection, this));
 
     rclcpp::spin(shared_from_this());
@@ -127,8 +127,8 @@ void EduDrive::enable()
 
     if(_using_pwr_mgmt){
         // Let power management board set hardware enable
-        // if the power management board is not used, the user needs to take care about this pin.
-        // The adapter board is designed to treat this pin as a input pin
+        // if the power management board is not used, the user needs to take care of this pin.
+        // The adapter board is designed to treat this pin as an input pin
         _pwr_mgmt->enable();
     }
 
@@ -270,7 +270,7 @@ void EduDrive::controlMotors(float vFwd, float vLeft, float omega)
     }
 }
 
-void EduDrive::receiveCAN()
+void EduDrive::hardwareWorker()
 {
     float voltageAdapter = _adapter->getVoltageSys();
     float voltagePwrMgmt = _pwr_mgmt->getVoltage();

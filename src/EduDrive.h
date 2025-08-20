@@ -79,14 +79,11 @@ public:
      */
     void velocityCallback(const geometry_msgs::msg::Twist::SharedPtr cmd);
 
-    /**
-     * @brief 
-     */
-    void receiveCAN();
-    
-    void checkLaggyConnection();
-    
 private:
+
+    void hardwareWorker();
+
+    void checkLaggyConnection();
 
     int gpio_write(const char *dev_name, int offset, int value);
 

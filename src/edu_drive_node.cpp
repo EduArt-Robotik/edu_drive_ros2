@@ -48,7 +48,6 @@ int main(int argc, char *argv[])
    auto responseMode = edu_drive->get_parameter("responseMode").as_int();
 
    // --- Controller parameters ---
-   //int controllers = 0;
    std::vector<edu::ControllerParams> controllerParams;
 
    edu_drive->declare_parameter("controllers", 0);
