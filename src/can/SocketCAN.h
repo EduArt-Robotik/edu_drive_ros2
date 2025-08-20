@@ -1,14 +1,16 @@
 #pragma once
 
-#include <linux/can.h>
+#include "SocketCANObserver.h"
+
 #include <linux/can/raw.h>
+#include <linux/can.h>
+
 #include <string>
 #include <vector>
 #include <thread>
 #include <memory>
 #include <mutex>
-
-#include "SocketCANObserver.h"
+#include <chrono>
 
 namespace edu
 {
@@ -87,6 +89,8 @@ private:
 
   bool _portOpen;
 
+  std::chrono::time_point<std::chrono::steady_clock> _next_time;
+  
   std::vector<SocketCANObserver*> _observers;
 
   std::unique_ptr<std::thread> _thread;
