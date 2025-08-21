@@ -1,23 +1,24 @@
-#ifndef __EDU_DRIVE_H
-#define __EDU_DRIVE_H
+#pragma once
 
-#include "rclcpp/rclcpp.hpp"
-#include "std_msgs/msg/byte_multi_array.hpp"
-#include "std_msgs/msg/float32_multi_array.hpp"
-#include "std_msgs/msg/float32.hpp"
-#include "sensor_msgs/msg/joy.hpp"
-#include "sensor_msgs/msg/imu.hpp"
-#include "geometry_msgs/msg/twist.hpp"
-#include "geometry_msgs/msg/pose_stamped.hpp"
-#include "geometry_msgs/msg/accel_stamped.hpp"
-#include "std_srvs/srv/set_bool.hpp"
+#include "Odometry.h"
 #include "MotorController.h"
 #include "RPiAdapterBoard.h"
 #include "RPiExtensionBoard.h"
 #include "PowerManagementBoard.h"
-#include <rclcpp/publisher.hpp>
-#include "Odometry.h"
+
+#include "rclcpp/rclcpp.hpp"
+#include "rclcpp/publisher.hpp"
+#include "std_msgs/msg/float32.hpp"
+#include "sensor_msgs/msg/joy.hpp"
+#include "sensor_msgs/msg/imu.hpp"
+#include "std_srvs/srv/set_bool.hpp"
+#include "geometry_msgs/msg/twist.hpp"
+#include "std_msgs/msg/byte_multi_array.hpp"
+#include "std_msgs/msg/float32_multi_array.hpp"
 #include "tf2_ros/transform_broadcaster.h"
+
+#include <memory>
+#include <vector>
 
 namespace edu
 {
@@ -50,7 +51,7 @@ public:
      * @param[in] using_pwr_mgmt Flag indicating whether the power management module of EduArt is used. This enables additional measurement topics (voltage and current sensing).
      * @param[in] verbosity Make the instance of this class more chatty. Debug information will be printed to stdout.
      */
-    void initDrive(std::vector<ControllerParams> cp, SocketCAN& can, bool using_pwr_mgmt=true, bool verbosity=false);
+    void initDrive(std::vector<ControllerParams> cp, std::shared_ptr<SocketCAN> can, bool using_pwr_mgmt=true, bool verbosity=false);
 
     /**
      * @brief Blocking ROS handler method. Call this method to enter the ROS message loop.
@@ -78,14 +79,11 @@ public:
      */
     void velocityCallback(const geometry_msgs::msg::Twist::SharedPtr cmd);
 
-    /**
-     * @brief 
-     */
-    void receiveCAN();
-    
-    void checkLaggyConnection();
-    
 private:
+
+    void hardwareWorker();
+
+    void checkLaggyConnection();
 
     int gpio_write(const char *dev_name, int offset, int value);
 
@@ -116,15 +114,14 @@ private:
     // Odometry
     std::unique_ptr<tf2_ros::TransformBroadcaster>                   _tf_broadcaster;
 
-    rclcpp::Time                   _lastCmd;       // Time elapsed since last call
-
-    SocketCAN*                     _can;           // Pointer to CAN instance
-
-    std::vector<MotorController*>  _mc;            // Vector containing pointer to all motor controller instances
-    RPiAdapterBoard*               _adapter;       // Adapter board
-    RPiExtensionBoard*             _extension;     // Extension board
-    PowerManagementBoard*          _pwr_mgmt;      // Power management board
-    Odometry*                      _odometry;      // Odometry model of robot
+    rclcpp::Time                                    _lastCmd;       // Time elapsed since last call
+    std::shared_ptr<SocketCAN>                      _can;           // Pointer to CAN instance
+    
+    std::unique_ptr<Odometry>                       _odometry;      // Odometry model of robot
+    std::unique_ptr<RPiAdapterBoard>                _adapter;       // Adapter board
+    std::unique_ptr<RPiExtensionBoard>              _extension;     // Extension board
+    std::unique_ptr<PowerManagementBoard>           _pwr_mgmt;      // Power management board
+    std::vector<std::unique_ptr<MotorController>>   _mc;            // Vector containing pointer to all motor controller instances
 
     double _vMax;
     double _omegaMax;
@@ -135,6 +132,4 @@ private:
     bool _verbosity;
 };
 
-} // namespace
-
-#endif //__EDU_DRIVE_H
+}

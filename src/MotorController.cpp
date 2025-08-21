@@ -492,4 +492,4 @@ bool MotorController::sendFloat(int cmd, float f)
   return _can->send(&_cf);
 }
 
-} // namespace
+}

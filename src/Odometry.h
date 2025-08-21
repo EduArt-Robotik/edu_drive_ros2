@@ -1,5 +1,4 @@
-#ifndef _ODOMETRY_H_
-#define _ODOMETRY_H_
+#pragma once
 
 #include "Matrix.h"
 #include <cstdint>
@@ -116,6 +115,4 @@ namespace edu
         edu::Matrix _invKinematics;
     };
 
-} //namespace
-
-#endif // _ODOMETRY_H_
+}

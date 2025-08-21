@@ -42,4 +42,4 @@ bool RPiExtensionBoard::sendEnabledState(bool enabled)
   return _can->send(&_cf);
 }
 
-} // namespace
+}

@@ -1,5 +1,4 @@
-#ifndef _RPIADAPTERBOARD_H_
-#define _RPIADAPTERBOARD_H_
+#pragma once
 
 #include "can/SocketCAN.h"
 
@@ -87,6 +86,4 @@ private:
     bool             _init;
 };
 
-} // namespace
-
-#endif // _RPIADAPTERBOARD_H_
+}

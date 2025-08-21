@@ -1,5 +1,4 @@
-#ifndef _MOTORCONTROLLERCAN_H_
-#define _MOTORCONTROLLERCAN_H_
+#pragma once
 
 #include "can/SocketCAN.h"
 #include <vector>
@@ -410,6 +409,4 @@ namespace edu
     long _usec;
   };
 
-} // namespace
-
-#endif /* _MOTORCONTROLLERCAN_H_ */
+}

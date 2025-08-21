@@ -87,4 +87,4 @@ void PowerManagementBoard::notify(struct can_frame* frame)
   }
 }
 
-} // namespace
+}
