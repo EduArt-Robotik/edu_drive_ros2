@@ -27,7 +27,7 @@ MotorController::MotorController(SocketCAN* can, ControllerParams params, bool v
     std::cout << "antiWindup     = " << params.antiWindup << std::endl;
     std::cout << "responseMode   = " << params.responseMode << std::endl;
 
-    std::cout << std::endl << "--- Controller #" << std::hex << params.canID << " parameters ---" << std::endl;
+    std::cout << std::endl << "--- Controller #" << std::hex << params.canID << std::dec << " parameters ---" << std::endl;
 
     for(unsigned int i=0; i<2; i++)
     {
