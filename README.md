@@ -225,6 +225,7 @@ It consists of the following components, which can all be plugged together:
 - *Motorcontrollers* can be plugged in directly. This allows you to control the speed of 1 to 8 motors. The motor controllers are available in two versions, single-channel or dual-channel. Up to four motor controllers can be used, i.e. it is possible to use 1 to 4 larger motors (I<sub>RMS</sub> up to 5A) or 1 to 8 smaller motors (I<sub>RMS</sub> up to 2.5A). The dielectric strength of the single-channel motor controllers is 55V. The dielectric strength of the dual-channel motor controllers is 35V.
 - The *Power Management Module* takes over the charge control of a 19.2V NiMH battery pack and also offers an on/off logic. Temperature monitoring of the battery uses an integrated 6.8kOhm NTC. Never connect a battery other than the one supplied by EduArt.
 - The *Auxiliary Power Supply Module* provides additional voltage levels with which you can supply additional devices. The permissible operating voltage is between 15V and 36V.
+- The *Extension Shield* allows you to extend the pin header of the Raspberry Pi. In addition, 8 model servos can be connected to the *Extension Shield*.
 
 > **Warning:** The Raspberry single-board computer is supplied directly via the socket connectors. Never connect an external power supply for the Raspberry via USB-C.
 
