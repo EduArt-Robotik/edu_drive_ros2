@@ -258,7 +258,7 @@ The following off-the-shelf cables are available for the __two-pole__ *Power Con
 The signals of the other connectors are shown below.
 <p align="center">
   <img src="/images/Free_Kinematics_Kit_Electrical_Interface_Desc_1920.jpg" width="80%"/>
-  <br><em>Fig.: Signal assignment of the white *Control Socket* and the Auxiliary Power Supply Module.</em>
+  <br><em>Fig.: Signal assignment of the white Control Socket and the Auxiliary Power Supply Module.</em>
 </p>
 
 In addition to the interface of the power supply shield the pinout of the motorcontroller boards is described below. Motors can be either connected on the 2x3 box header or on the 1x6 pin header.
