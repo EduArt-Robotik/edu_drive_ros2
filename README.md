@@ -2,8 +2,8 @@
 This package comprises a ROS2 interface for EduArt's generic drive concept. It covers several kinematic concepts: Differential drive, Mecanum steering and Skid steering. All three can be used in dependency of the mounted wheels and the configuration of YAML parameters.
 
 <p align="center">
-  <img src="/images/Prototype_yellow.jpg"/>
-  <em>Robot prototype using the Free Kinematic Kit.</em>
+  <img src="/images/Prototype_yellow.jpg" width="90%"/>
+  <br><em>Fig.: Robot prototype using the Free Kinematic Kit.</em>
 </p>
 
 ## Launching the Robot
@@ -217,7 +217,8 @@ ros2 launch edu_drive_ros2 edu_drive.launch.py
 The Free Kinematics Kit from EduArt gives you all the freedom you need to build your own robot with few restrictions on the mechanical design.
 
 <p align="center">
-  <img src="/images/Free_Kinematics_Kit_1920.jpg" width="800"/>
+  <img src="/images/Free_Kinematics_Kit_1920.jpg" width="80%"/>
+  <br><em>Fig.: Kinematic Kit in two different variants, with Ethernet Gateway or as plug-in solution for a Raspberry Pi 5.</em>
 </p>
 
 It consists of the following components, which can all be plugged together:
@@ -226,32 +227,50 @@ It consists of the following components, which can all be plugged together:
 - The *Power Management Module* takes over the charge control of a 19.2V NiMH battery pack and also offers an on/off logic. Temperature monitoring of the battery uses an integrated 6.8kOhm NTC. Never connect a battery other than the one supplied by EduArt.
 - The *Auxiliary Power Supply Module* provides additional voltage levels with which you can supply additional devices. The permissible operating voltage is between 15V and 36V.
 - The *Extension Shield* allows you to extend the pin header of the Raspberry Pi. In addition, 8 model servos can be connected to the *Extension Shield*.
-<p align="center">
-  <img src="/images/extend_kinematic_kit.jpg" width="800"/>
+
+<p align="center"  width="100%">
+  <img width="80%" src="/images/extend_kinematic_kit.jpg"/>
+  <br><em>Fig.: Extend Kinematic Kit with Extension shield</em>
 </p>
-<p align="center">
-  <img src="/images/PowerManagement.jpg" width="800"/>
+
+<p align="center"  width="100%">
+  <img src="/images/PowerManagement.jpg" width="80%"/>
+  <br><em>Fig.: Top view of power management module. Above the white Control Socket there is a two-pole socket for powering the Extension Shield.</em>
 </p>
 
 > **Warning:** The Raspberry single-board computer is supplied directly via the socket connectors. Never connect an external power supply for the Raspberry via USB-C.
 
 ### Electrical Interface
-Below you can see the electrical interfaces of the Free Kinematics Kit. There are off-the-shelf cables for the white Molex socket. Depending on the desired cable length, you can obtain the following part numbers from the usual distributors: 151360800 (50 mm), 151360801 (100 mm), 151360802 (150 mm), 151360803 (300 mm), 151360805 (450 mm) or 151360806 (600 mm).
+Below you can see the electrical interfaces of the Free Kinematics Kit. There are off-the-shelf cables for the __white__ Molex *Control Socket*. Depending on the desired cable length, you can obtain the following part numbers from the usual distributors:
+*  50mm: 151360800
+* 100mm: 151360801
+* 150mm: 151360802
+* 300mm: 151360803
+* 450mm: 151360805
+* 600mm: 151360806
 
+The following off-the-shelf cables are available for the __two-pole__ *Power Connector* of the Extension Shield:
+* 150mm: 2147501021
+* 300mm: 2147501022
+* 600mm: 2147501023
+
+<br>
+The signals of the other connectors are shown below.
 <p align="center">
-  <img src="/images/Free_Kinematics_Kit_Electrical_Interface_Desc_1920.jpg" width="800"/>
+  <img src="/images/Free_Kinematics_Kit_Electrical_Interface_Desc_1920.jpg" width="80%"/>
+  <br><em>Fig.: Signal assignment of the white *Control Socket* and the Auxiliary Power Supply Module.</em>
 </p>
 
 In addition to the interface of the power supply shield the pinout of the motorcontroller boards is described below. Motors can be either connected on the 2x3 box header or on the 1x6 pin header.
 
 <p align="center">
-  <img src="/images/Motorcontroller.jpg" width="800"/>
+  <img src="/images/Motorcontroller.jpg" width="80%"/>
 </p>
 
 When using a generic motor with the EduArt motorcontroller boards the motor has to be wired correctly to match the above pinout description. Below is the motor wiring diagram of a generic motor.The encoder supply voltage +5V and GND are sensitive to reverse voltage. Pay attention when connecting these wires!
 
 <p align="center">
-  <img src="/images/example_motor.jpg" width="600"/>
+  <img src="/images/example_motor.jpg" width="60%"/>
 </p>
 
 
@@ -263,7 +282,7 @@ Integrated voltage monitoring of the power management module protects your robot
 The following diagram shows an example of the logic functions.
 
 <p align="center">
-  <img src="/images/simulateEnableLogic/simulateEnableLogic.png" width="800"/>
+  <img src="/images/simulateEnableLogic/simulateEnableLogic.png" width="80%"/>
 </p>
 
 > **Warning:** Despite these protective functions, you must always ensure that the device is used as intended. Never charge the device unattended. Also make sure that no persons are in the immediate vicinity when operating your robot and that the robot cannot fall from a height difference.
@@ -272,7 +291,7 @@ The following diagram shows an example of the logic functions.
 The software is structured in three layers. An independent layer enables communication via a CAN bus. Specific commands are defined via the classes of the robot interface layer. The ROS interface is encapsulated in a single class. For most users, it is sufficient to use the EduDrive class, as the included node edu_drive_node.cpp does.
 
 <p align="center">
-  <img src="/doc/edu_drive_classdiagram.png" width="800"/>
+  <img src="/doc/edu_drive_classdiagram.png" width="80%"/>
 </p>
 
 #### Adding additional CAN devices
