@@ -226,6 +226,12 @@ It consists of the following components, which can all be plugged together:
 - The *Power Management Module* takes over the charge control of a 19.2V NiMH battery pack and also offers an on/off logic. Temperature monitoring of the battery uses an integrated 6.8kOhm NTC. Never connect a battery other than the one supplied by EduArt.
 - The *Auxiliary Power Supply Module* provides additional voltage levels with which you can supply additional devices. The permissible operating voltage is between 15V and 36V.
 - The *Extension Shield* allows you to extend the pin header of the Raspberry Pi. In addition, 8 model servos can be connected to the *Extension Shield*.
+<p align="center">
+  <img src="/images/extend_kinematic_kit.jpg" width="800"/>
+</p>
+<p align="center">
+  <img src="/images/PowerManagement.jpg" width="800"/>
+</p>
 
 > **Warning:** The Raspberry single-board computer is supplied directly via the socket connectors. Never connect an external power supply for the Raspberry via USB-C.
 
