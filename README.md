@@ -257,6 +257,7 @@ The following off-the-shelf cables are available for the __two-pole__ *Power Con
 A suitable ribbon cable is required for connecting the Extension Shield. You can make this yourself in the desired length by purchasing the following part numbers, for example:
 * Amphenol T812 IDC connector socket: T812124A100CEU
 * Flat ribbon cable, 24-wire, 1.27 mm pitch: 6618297000505
+
 It is wired so that the tabs face in the same direction. Viewed from above, the red line is on the “left.”
 
 <br>
