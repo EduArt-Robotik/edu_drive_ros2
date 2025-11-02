@@ -338,3 +338,23 @@ Suppose you want to develop your own device and read in this data via the CAN bu
     return _can->send(&cf);
   }
 ```
+
+### What do I need to build my own EduArt robot?
+The following parts list gives you an overview of what you need if you want to build your own EduArt robot:
+* Kinematic Kit (Adapter Board, Motorcontrollers, Power Management Module)
+* 19.2V NiMH-Battery with NTC (also available from EduArt)
+* Cable for Control Socket (15136080[0-6])
+* Emergency Stop Button (normally close contact)
+* Toggle Switch
+* On button (normally open contact)
+* Charging socket (2.1 mm diameter)
+* Raspberry Pi5 (if you use the RPi5 adapter board, otherwise (Ethernet controler) any computer with Ethernet interface)
+* DC-Motors (18V or 24V) with Encoders (recommended is a minimum of 64 CPR)
+* 30V Power supply unit with min. 2.0A current (also available from EduArt)
+
+If you additionally want to use the expansion shield, you will also need:
+* Amphenol T812 IDC connector socket: T812124A100CEU
+* Flat ribbon cable, 24-wire, 1.27 mm pitch: 6618297000505
+* Two-pole Power Connector (214750102[1-3])
+
+You are free to choose the mechanical design of your robot.
