@@ -1,5 +1,7 @@
 # edu_drive_ros2
-This package comprises a ROS2 interface for EduArt's generic drive concept. It covers several kinematic concepts: Differential drive, Mecanum steering and Skid steering. All three can be used in dependency of the mounted wheels and the configuration of YAML parameters.
+This package comprises a ROS2 interface for EduArt's generic drive concept.
+It covers several kinematic concepts: Differential drive, Mecanum steering and Skid steering.
+All three can be used in dependency of the mounted wheels and the configuration of YAML parameters.
 
 <p align="center">
   <img src="/images/Prototype_yellow.jpg" width="90%"/>
@@ -18,8 +20,10 @@ This package comprises a ROS2 interface for EduArt's generic drive concept. It c
 - [Troubleshooting](#troubleshooting)
 
 ## Launching the Robot
-In order to run the robot, you need to launch the appropriate launch file. In the launch folder, there is a prepared template.
-Configure the correct kinematic concept and motor parameters. A description of the YAML file can be found below.
+In order to run the robot, you need to launch the appropriate launch file.
+In the launch folder, there is a prepared template.
+Configure the correct kinematic concept and motor parameters.
+A description of the YAML file can be found below.
 ```bash
 ros2 launch edu_drive_ros2 edu_drive.launch.py
 ```
@@ -62,10 +66,13 @@ The kinematic concept uses a conversion matrix for the conversion of twist param
 
 <img src="https://latex.codecogs.com/svg.image?\begin{pmatrix}&space;\omega_0&space;\\&space;\omega_1&space;\\&space;\omega_2&space;\\&space;\omega_3\end{pmatrix}&space;=&space;\mathbf{T}\begin{pmatrix}v_x&space;\\v_y&space;\\\omega\end{pmatrix}&space;" title="https://latex.codecogs.com/svg.image?\begin{pmatrix} \omega_0 \\ \omega_1 \\ \omega_2 \\ \omega_3\end{pmatrix} = \mathbf{T}\begin{pmatrix}v_x \\v_y \\\omega\end{pmatrix} " />
 
-, where &omega;<sub>i</sub> are the wheel's angular velocities and v<sub>x</sub>, v<sub>y</sub> and &omega; are Twist values. The matrix **T** can be calculated as follows:
+, where &omega;<sub>i</sub> are the wheel's angular velocities and v<sub>x</sub>, v<sub>y</sub> and &omega; are Twist values.
+The matrix **T** can be calculated as follows:
 <img src="https://latex.codecogs.com/svg.image?\mathbf{T}&space;=&space;\begin{pmatrix}&space;kx_0&space;&&space;ky_0&space;&&space;k\omega{}_0\\&space;kx_1&space;&&space;ky_1&space;&&space;k\omega{}_1\\&space;kx_2&space;&&space;ky_2&space;&&space;k\omega{}_2\\&space;kx_3&space;&&space;ky_3&space;&&space;k\omega{}_3\end{pmatrix}" title="https://latex.codecogs.com/svg.image?\mathbf{T} = \begin{pmatrix} kx_0 & ky_0 & k\omega{}_0\\ kx_1 & ky_1 & k\omega{}_1\\ kx_2 & ky_2 & k\omega{}_2\\ kx_3 & ky_3 & k\omega{}_3\end{pmatrix}" />
 
-for a four-wheeled robot. kx<sub>i</sub>, ky<sub>i</sub> and k&omega;<sub>i</sub> are the translation parameters from one space to the other. These parameters include the wheel radius r as well as the robot length l<sub>x</sub> and robot width l<sub>y</sub>.
+for a four-wheeled robot.
+kx<sub>i</sub>, ky<sub>i</sub> and k&omega;<sub>i</sub> are the translation parameters from one space to the other.
+These parameters include the wheel radius r as well as the robot length l<sub>x</sub> and robot width l<sub>y</sub>.
 
 Depending on the polarity of the motor wiring, the kinematic parameters may have to be negated.
 
@@ -85,7 +92,11 @@ $k_{w,n} = \pm\frac{1}{r} \cdot \frac{l_x+l_y}{2} = \pm 6$ (mecanum wheels) or $
 
 # Setting up a Raspberry PI from scratch
 ### 1. Choose between Raspberry Pi OS or Ubuntu
-Which version of the operating system you use determines which ROS version can be installed later. We also recommend using the Ubuntu Server Edition. Besides Ubuntu it is also possible to use Raspberry Pi OS, but ROS has to be built from source later on. This guide covers the installation of **Ubuntu 24.04 Server** in combination with **ROS 2 Jazzy** on a **Raspberry Pi 5**. For other Ubuntu or Raspberry versions, see the following legacy guides:
+Which version of the operating system you use determines which ROS version can be installed later.
+We also recommend using the Ubuntu Server Edition.
+Besides Ubuntu it is also possible to use Raspberry Pi OS, but ROS has to be built from source later on.
+This guide covers the installation of **Ubuntu 24.04 Server** in combination with **ROS 2 Jazzy** on a **Raspberry Pi 5**.
+For other Ubuntu or Raspberry versions, see the following legacy guides:
    - [Ubuntu 22.04 Server with ROS 2 Humble on Raspberry Pi 4](/doc/legacyInstallationGuides/Ubuntu22.md)
    - [Ubuntu 23.04 Server with ROS 2 Humble on Raspberry Pi 5](/doc/legacyInstallationGuides/Ubuntu23.md)
 ### 2. Flash microSD card
@@ -108,7 +119,12 @@ sudo apt install can-utils build-essential git
 You might need to reboot the Pi with the command `sudo reboot`
 
 ### 5. Kernel upgrade (Ubuntu 24.04.1 LTS)
-Unfortunately, there is a bug in the handling of our CAN module in the kernel version of Ubuntu 24.04.1 LTS used. This bug leads to a segmentation fault during the boot process. However, this bug has already been recognized and is already in the list of proposed fixes for version 24.04.1 LTS. It is also to be expected that this problem will be solved from version 24.04.2 LTS. To install the proposed kernel, these sources must be activated for the package manager. Therefore, in the file `/etc/apt/sources.list.d/ubuntu.sources`, add the entry `noble-proposed` so that the suites are defined as follows:
+Unfortunately, there is a bug in the handling of our CAN module in the kernel version of Ubuntu 24.04.1 LTS used.
+This bug leads to a segmentation fault during the boot process.
+However, this bug has already been recognized and is already in the list of proposed fixes for version 24.04.1 LTS.
+It is also to be expected that this problem will be solved from version 24.04.2 LTS.
+To install the proposed kernel, these sources must be activated for the package manager.
+Therefore, in the file `/etc/apt/sources.list.d/ubuntu.sources`, add the entry `noble-proposed` so that the suites are defined as follows:
 `Suites: noble noble-updates noble-backports noble-proposed`
 The kernel can then be installed:
 ```bash
@@ -123,20 +139,26 @@ uname -r
 
 ### 6. Configure the firmware for the CAN interfaces
    
-Add the configuration of all three can interfaces to the /boot/firmware/config.txt file. This can be done with the following command:
+Add the configuration of all three can interfaces to the /boot/firmware/config.txt file.
+This can be done with the following command:
 ```bash
 sudo bash -c "echo -e '\ndtoverlay=spi1-2cs\ndtoverlay=mcp251xfd,spi0-0,oscillator=40000000,interrupt=25\ndtoverlay=mcp251xfd,spi0-1,oscillator=40000000,interrupt=13\ndtoverlay=mcp251xfd,spi1-0,oscillator=40000000,interrupt=24' >> /boot/firmware/config.txt"
 ```
 
 ### 7. Add udev rules and services for CAN interfaces
    
-The extension board for the Raspberry Pi provides three CANFD interfaces. To ensure that the naming of the interfaces is the same after each boot process, a udev rule must be created in the /etc/udev/rules.d directory. Create the file /etc/udev/rules.d/42-mcp251xfd.rules with the following content:
+The extension board for the Raspberry Pi provides three CANFD interfaces.
+To ensure that the naming of the interfaces is the same after each boot process, a udev rule must be created in the /etc/udev/rules.d directory.
+Create the file /etc/udev/rules.d/42-mcp251xfd.rules with the following content:
 ```bash
 KERNELS=="spi0.0", SUBSYSTEMS=="spi", DRIVERS=="mcp251xfd", ACTION=="add", NAME="CAN0", TAG+="systemd", ENV{SYSTEMD_WANTS}="can0-attach.service"
 KERNELS=="spi0.1", SUBSYSTEMS=="spi", DRIVERS=="mcp251xfd", ACTION=="add", NAME="CAN1", TAG+="systemd", ENV{SYSTEMD_WANTS}="can1-attach.service"
 KERNELS=="spi1.0", SUBSYSTEMS=="spi", DRIVERS=="mcp251xfd", ACTION=="add", NAME="CAN2", TAG+="systemd", ENV{SYSTEMD_WANTS}="can2-attach.service"
 ```
-In this way, the CAN interface for the motor controllers is always named CAN2. The CAN0 and CAN1 interfaces can be accessed via the sockets on the expansion board (see labeling on the board) and are intended for connecting the flexible sensor ring from EduArt. Please note that these entries require the definition of three systemd services. Create the file /etc/systemd/system/can0-attach.service with the following content.
+In this way, the CAN interface for the motor controllers is always named CAN2.
+The CAN0 and CAN1 interfaces can be accessed via the sockets on the expansion board (see labeling on the board) and are intended for connecting the flexible sensor ring from EduArt.
+Please note that these entries require the definition of three systemd services.
+Create the file /etc/systemd/system/can0-attach.service with the following content.
 ```bash
 [Service]
 Type=oneshot
@@ -157,9 +179,14 @@ ExecStart=ip link set CAN2 up type can bitrate 500000
 ```
 
 ### 8. Install ROS
-Select the ROS [distribution](https://docs.ros.org/en/rolling/Releases.html) depending on the installed version of your operating system. For Ubuntu Server 24.04 install [ROS Jazzy](https://docs.ros.org/en/rolling/Releases/Release-Jazzy-Jalisco.html).
+Select the ROS [distribution](https://docs.ros.org/en/rolling/Releases.html) depending on the installed version of your operating system.
+For Ubuntu Server 24.04 install [ROS Jazzy](https://docs.ros.org/en/rolling/Releases/Release-Jazzy-Jalisco.html).
 Read the official documentation for reference on [building from source](https://docs.ros.org/en/jazzy/Installation/Alternatives/Ubuntu-Development-Setup.html) and [prebuilt packages](https://docs.ros.org/en/jazzy/Installation/Ubuntu-Install-Debians.html) for more detail.\
-> **Important hint:** It is important that UTF8 is supported. Other language settings, such as those specified in the ROS2 documentation, should work. We have also tested the German settings. For German settings, please replace the strings “en_US” with “de_DE”.
+> **Important hint:** It is important that UTF8 is supported.
+> Other language settings, such as those specified in the ROS2 documentation, should work.
+> We have also tested the German settings.
+> For German settings, please replace the strings "en_US" with "de_DE".
+
 The following commands prepare the installation of ROS:
 ```bash
 sudo apt update && sudo apt install locales
@@ -189,11 +216,13 @@ echo "source /opt/ros/jazzy/setup.bash" >> ~/.bashrc
 
 ### 10.  Optional: Static IP address
 #### Ubuntu 22.04. server edition
-By default, the configuration of the Ubuntu 22.04. server edition is set to DHCP. If you would like to set a static IP address, you can do this by making the following adjustment:
+By default, the configuration of the Ubuntu 22.04. server edition is set to DHCP.
+If you would like to set a static IP address, you can do this by making the following adjustment:
 ```bash
 sudo bash -c "echo 'network: {config: disabled}' > /etc/cloud/cloud.cfg.d/99-disable-network-config.cfg"
 ```
-This switches off the automatism with which the network configuration file is generated. The network configuration file /etc/netplan/50-cloud-init.yaml must now be adapted:
+This switches off the automatism with which the network configuration file is generated.
+The network configuration file /etc/netplan/50-cloud-init.yaml must now be adapted:
 ```yaml
 network:
     renderer: networkd
@@ -208,7 +237,8 @@ network:
               via: 192.168.178.1
     version: 2
 ```
-Replace the IP addresses above with your desired configuration. Then reboot your system.
+Replace the IP addresses above with your desired configuration.
+Then reboot your system.
 #### Raspberry Pi OS / Debian version: 12 (bookworm)
 The network configuration can easily be done with the command nmtui
 ```bash
@@ -225,7 +255,8 @@ colcon build --packages-select edu_drive_ros2 --symlink-install
 source install/setup.bash
 ```
 
-Now, the launch file should be started. Please adjust the parameters in edu_drive.yaml before.
+Now, the launch file should be started.
+Please adjust the parameters in edu_drive.yaml before.
 ```bash
 ros2 launch edu_drive_ros2 edu_drive.launch.py
 ```
@@ -239,11 +270,25 @@ The Free Kinematics Kit from EduArt gives you all the freedom you need to build 
 </p>
 
 It consists of the following components, which can all be plugged together:
-- *Adapter Board* either directly pluggable onto a Raspberry Pi 4/5 or as a standalone EduArt Ethernet controller board, with which you can connect any computer with an Ethernet interface. This gives you the freedom to build the computing power into your robot that you need for your desired application. This board is supplied via the socket strips, i.e. a circuit board with the appropriate sockets for a power supply unit or a battery should be used. The possible input voltage V<sub>in</sub> is 12V to 55V. Depending on how many motors are connected, the power supply must be able to supply higher currents. High-current batteries are recommended for operating a robot (min. 8A).
-- *Motorcontrollers* can be plugged in directly. This allows you to control the speed of 1 to 8 motors. The motor controllers are available in two versions, single-channel or dual-channel. Up to four motor controllers can be used, i.e. it is possible to use 1 to 4 larger motors (I<sub>RMS</sub> up to 5A) or 1 to 8 smaller motors (I<sub>RMS</sub> up to 2.5A). The dielectric strength of the single-channel motor controllers is 55V. The dielectric strength of the dual-channel motor controllers is 35V.
-- The *Power Management Module* takes over the charge control of a 19.2V NiMH battery pack and also offers an on/off logic. Temperature monitoring of the battery uses an integrated 6.8kOhm NTC. Never connect a battery other than the one supplied by EduArt.
-- The *Auxiliary Power Supply Module* provides additional voltage levels with which you can supply additional devices. The permissible operating voltage is between 15V and 36V.
-- The *Extension Shield* allows you to extend the pin header of the Raspberry Pi. In addition, 8 model servos can be connected to the *Extension Shield*.
+- *Adapter Board* either directly pluggable onto a Raspberry Pi 4/5 or as a standalone EduArt Ethernet controller board, with which you can connect any computer with an Ethernet interface.
+  This gives you the freedom to build the computing power into your robot that you need for your desired application.
+  This board is supplied via the socket strips, i.e. a circuit board with the appropriate sockets for a power supply unit or a battery should be used.
+  The possible input voltage V<sub>in</sub> is 12V to 55V.
+  Depending on how many motors are connected, the power supply must be able to supply higher currents.
+  High-current batteries are recommended for operating a robot (min. 8A).
+- *Motorcontrollers* can be plugged in directly.
+  This allows you to control the speed of 1 to 8 motors.
+  The motor controllers are available in two versions, single-channel or dual-channel.
+  Up to four motor controllers can be used, i.e. it is possible to use 1 to 4 larger motors (I<sub>RMS</sub> up to 5A) or 1 to 8 smaller motors (I<sub>RMS</sub> up to 2.5A).
+  The dielectric strength of the single-channel motor controllers is 55V.
+  The dielectric strength of the dual-channel motor controllers is 35V.
+- The *Power Management Module* takes over the charge control of a 19.2V NiMH battery pack and also offers an on/off logic.
+  Temperature monitoring of the battery uses an integrated 6.8kOhm NTC.
+  Never connect a battery other than the one supplied by EduArt.
+- The *Auxiliary Power Supply Module* provides additional voltage levels with which you can supply additional devices.
+  The permissible operating voltage is between 15V and 36V.
+- The *Extension Shield* allows you to extend the pin header of the Raspberry Pi.
+  In addition, 8 model servos can be connected to the *Extension Shield*.
 
 <p align="center"  width="100%">
   <img width="80%" src="/images/extend_kinematic_kit.jpg"/>
@@ -255,10 +300,13 @@ It consists of the following components, which can all be plugged together:
   <br><em>Fig.: Top view of power management module. Above the white Control Socket there is a two-pole socket for powering the Extension Shield.</em>
 </p>
 
-> **Warning:** The Raspberry single-board computer is supplied directly via the socket connectors. Never connect an external power supply for the Raspberry via USB-C.
+> **Warning:** The Raspberry single-board computer is supplied directly via the socket connectors.
+> Never connect an external power supply for the Raspberry via USB-C.
 
 ### Electrical Interface
-Below you can see the electrical interfaces of the Free Kinematics Kit. There are off-the-shelf cables for the __white__ Molex *Control Socket*. Depending on the desired cable length, you can obtain the following part numbers from the usual distributors:
+Below you can see the electrical interfaces of the Free Kinematics Kit.
+There are off-the-shelf cables for the __white__ Molex *Control Socket*.
+Depending on the desired cable length, you can obtain the following part numbers from the usual distributors:
 *  50mm: 151360800
 * 100mm: 151360801
 * 150mm: 151360802
@@ -271,11 +319,13 @@ The following off-the-shelf cables are available for the __two-pole__ *Power Con
 * 300mm: 2147501022
 * 600mm: 2147501023
 
-A suitable ribbon cable is required for connecting the Extension Shield. You can make this yourself in the desired length by purchasing the following part numbers, for example:
+A suitable ribbon cable is required for connecting the Extension Shield.
+You can make this yourself in the desired length by purchasing the following part numbers, for example:
 * Amphenol T812 IDC connector socket: T812124A100CEU
 * Flat ribbon cable, 24-wire, 1.27 mm pitch: 6618297000505
 
-It is wired so that the tabs face in the same direction. Viewed from above, the red line is on the “left.”
+It is wired so that the tabs face in the same direction.
+Viewed from above, the red line is on the "left."
 
 <br>
 The signals of the other connectors are shown below.
@@ -284,7 +334,8 @@ The signals of the other connectors are shown below.
   <br><em>Fig.: Signal assignment of the white Control Socket and the Auxiliary Power Supply Module.</em>
 </p>
 
-In addition to the interface of the power supply shield the pinout of the motorcontroller boards is described below. Motors can be either connected on the 2x3 box header or on the 1x6 pin header.
+In addition to the interface of the power supply shield the pinout of the motorcontroller boards is described below.
+Motors can be either connected on the 2x3 box header or on the 1x6 pin header.
 
 <p align="center">
   <img src="/images/Motorcontroller.jpg" width="80%"/>
@@ -292,7 +343,8 @@ In addition to the interface of the power supply shield the pinout of the motorc
 
 When using a generic motor with the EduArt motorcontroller boards the motor has to be wired correctly to match the above pinout description.
 Below is the motor wiring diagram of a generic motor.
-The encoder supply voltage +5V and GND are sensitive to reverse voltage. Pay attention when connecting these wires!
+The encoder supply voltage +5V and GND are sensitive to reverse voltage.
+Pay attention when connecting these wires!
 
 <p align="center">
   <img src="/images/example_motor.jpg" width="60%"/>
@@ -310,17 +362,25 @@ The following diagram shows an example of the logic functions.
   <img src="/images/simulateEnableLogic/simulateEnableLogic.png" width="80%"/>
 </p>
 
-> **Warning:** Despite these protective functions, you must always ensure that the device is used as intended. Never charge the device unattended. Also make sure that no persons are in the immediate vicinity when operating your robot and that the robot cannot fall from a height difference.
+> **Warning:** Despite these protective functions, you must always ensure that the device is used as intended.
+> Never charge the device unattended.
+> Also make sure that no persons are in the immediate vicinity when operating your robot and that the robot cannot fall from a height difference.
 
 ### Software Interface
-The software is structured in three layers. An independent layer enables communication via a CAN bus. Specific commands are defined via the classes of the robot interface layer. The ROS interface is encapsulated in a single class. For most users, it is sufficient to use the EduDrive class, as the included node edu_drive_node.cpp does.
+The software is structured in three layers.
+An independent layer enables communication via a CAN bus.
+Specific commands are defined via the classes of the robot interface layer.
+The ROS interface is encapsulated in a single class.
+For most users, it is sufficient to use the EduDrive class, as the included node edu_drive_node.cpp does.
 
 <p align="center">
   <img src="/doc/edu_drive_classdiagram.png" width="80%"/>
 </p>
 
 #### Adding additional CAN devices
-Suppose you want to develop your own device and read in this data via the CAN bus. In this case, you add a new class that inherits from the SocketCANObserver class. Below is an example of how the implementation might look.
+Suppose you want to develop your own device and read in this data via the CAN bus.
+In this case, you add a new class that inherits from the SocketCANObserver class.
+Below is an example of how the implementation might look.
 ```c++
   YOURCLASS::YOURCLASS(SocketCAN* can, bool verbosity)
   {
@@ -382,7 +442,8 @@ You are free to choose the mechanical design of your robot.
 ### Troubleshooting
 
 > 🚫 **The robot does not drive** \
-> The robot remains stationary even when velocity commands are sent. This can be caused by power supply issues, emergency stop activation, communication problems, or incorrect motor controller configuration.
+> The robot remains stationary even when velocity commands are sent.
+> This can be caused by power supply issues, emergency stop activation, communication problems, or incorrect motor controller configuration.
 
 **1. Check power supply configuration**
    - The charger **must not** be plugged in during operation
@@ -409,7 +470,8 @@ You are free to choose the mechanical design of your robot.
 
 
 > 🚫**Wheels rotate at full speed and don't respond to velocity commands** \
-> This behavior typically indicates an encoder polarity problem. When encoders are wired with reversed polarity, the controller cannot properly regulate motor speed, causing motors to spin uncontrolled.
+> This behavior typically indicates an encoder polarity problem.
+> When encoders are wired with reversed polarity, the controller cannot properly regulate motor speed, causing motors to spin uncontrolled.
 
 **1. Adjust encoder inversion parameter**
    - Open your robot's configuration YAML file (e.g., `edu_drive.yaml`) and locate the `invertEnc` parameter for the affected motors
@@ -417,7 +479,8 @@ You are free to choose the mechanical design of your robot.
      - Change `0` to `1`
      - Change `1` to `0`
    - Save the file and restart the robot
-   > The `invertEnc` parameter is the same for all motors of a hardware type. If all motors are the same, the parameter must also be the same for all motors.
+   > The `invertEnc` parameter is the same for all motors of a hardware type.
+   > If all motors are the same, the parameter must also be the same for all motors.
 
 > 🚫**Wheels rotate in the wrong direction** \
 > You have calculated the kinematic matrix for your robot but some wheels rotate in the wrong direction.
@@ -427,4 +490,5 @@ You are free to choose the mechanical design of your robot.
    - Invert the sign of all three values in the kinematic vector:
      - For example, change `[20.0, -20.0, -6.0]` to `[-20.0, 20.0, 6.0]`
    - Save the file and restart the robot
-   > Each motor has its own kinematic row (a three-dimensional vector). Only modify the rows for motors that rotate in the wrong direction.
+   > Each motor has its own kinematic row (a three-dimensional vector).
+   > Only modify the rows for motors that rotate in the wrong direction.
