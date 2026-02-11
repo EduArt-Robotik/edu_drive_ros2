@@ -6,17 +6,28 @@ This package comprises a ROS2 interface for EduArt's generic drive concept. It c
   <br><em>Fig.: Robot prototype using the Free Kinematic Kit.</em>
 </p>
 
+## Table of Contents
+- [Launching the Robot](#launching-the-robot)
+- [YAML file parameters](#yaml-file-parameters)
+- [Calculation of the kinematic parameters](#calculation-of-the-kinematic-parameters)
+- [Setting up a Raspberry PI from scratch](#setting-up-a-raspberry-pi-from-scratch)
+- [Free Kinematics Kit](#free-kinematics-kit)
+  - [Electrical Interface](#electrical-interface)
+  - [Software Interface](#software-interface)
+  - [What do I need to build my own EduArt robot?](#what-do-i-need-to-build-my-own-eduart-robot)
+- [Troubleshooting](#troubleshooting)
+
 ## Launching the Robot
 In order to run the robot, you need to launch the appropriate launch file. In the launch folder, there is a prepared template.
 Configure the correct kinematic concept and motor parameters. A description of the YAML file can be found below.
 ```bash
 ros2 launch edu_drive_ros2 edu_drive.launch.py
 ```
-When everthing is initialized well, one should see the following output:
+When everything is initialized well, one should see the following output:
 ```bash
 # Listener start
 CAN Interface: CAN2
-[ INFO] [1651663592.994224328]: Instanciated robot with vMax: 0.366519 m/s and omegaMax: 0.733038 rad/s
+[ INFO] [1651663592.994224328]: Instantiated robot with vMax: 0.366519 m/s and omegaMax: 0.733038 rad/s
 ...
 ```
 After startup, the drive system is in the deactivated state.
@@ -56,7 +67,7 @@ The kinematic concept uses a conversion matrix for the conversion of twist param
 
 for a four-wheeled robot. kx<sub>i</sub>, ky<sub>i</sub> and k&omega;<sub>i</sub> are the translation parameters from one space to the other. These parameters include the wheel radius r as well as the robot length l<sub>x</sub> and robot width l<sub>y</sub>.
 
-Depending on the polarity of the motor wiring, the kinematic parameters may have to negated.
+Depending on the polarity of the motor wiring, the kinematic parameters may have to be negated.
 
 ### Example for a Differential drive
 <img src="https://latex.codecogs.com/svg.image?\mathbf{T}&space;=&space;\begin{pmatrix}&space;\frac{1}{r}&space;&&space;0&space;&&space;-\frac{l_y}{2&space;\cdot&space;r}\\&space;-\frac{1}{r}&space;&&space;0&space;&&space;-\frac{l_y}{2&space;\cdot&space;r}\\\end{pmatrix}" title="https://latex.codecogs.com/svg.image?\mathbf{T} = \begin{pmatrix} \frac{1}{r} & 0 & -\frac{l_y}{2 \cdot r}\\ -\frac{1}{r} & 0 & -\frac{l_y}{2 \cdot r}\\\end{pmatrix}" />
@@ -78,9 +89,15 @@ Which version of the operating system you use determines which ROS version can b
    - [Ubuntu 22.04 Server with ROS 2 Humble on Raspberry Pi 4](/doc/legacyInstallationGuides/Ubuntu22.md)
    - [Ubuntu 23.04 Server with ROS 2 Humble on Raspberry Pi 5](/doc/legacyInstallationGuides/Ubuntu23.md)
 ### 2. Flash microSD card
-To flash the microSD card we recommend using the [RPi Imager](https://www.raspberrypi.com/software/) which can be installed on Linux, Windows and macOS. On Ubuntu, use the command `sudo apt install rpi-imager`. After starting the software, choose your device, desired operating system and microSD card. After pressing *Next* you can change some aditional settings like your passwords or username. We recommend to setup your wifi and ssh connection.
+To flash the microSD card we recommend using the [RPi Imager](https://www.raspberrypi.com/software/) which can be installed on Linux, Windows and macOS.
+On Ubuntu, use the command `sudo apt install rpi-imager`.
+After starting the software, choose your device, desired operating system and microSD card.
+After pressing *Next* you can change some additional settings like your passwords or username.
+We recommend to setup your wifi and ssh connection.
 ### 3. Connect to your Raspberry Pi
-After inserting the microSD card and powering up the Raspberry Pi, connect to the Rasperry via ssh. The command follows the layout `ssh <username>@<ip-address>`. To find out the IP, have a look into your router or use the `nmap` tool to list all available devices in your network.
+After inserting the microSD card and powering up the Raspberry Pi, connect to the Raspberry via ssh.
+The command follows the layout `ssh <username>@<ip-address>`.
+To find out the IP, have a look into your router or use the `nmap` tool to list all available devices in your network.
 
 ### 4. Update and install packages
 ```bash
@@ -192,7 +209,7 @@ network:
     version: 2
 ```
 Replace the IP addresses above with your desired configuration. Then reboot your system.
-#### Raspberry Pi OS / Debian version: 12 (bookwork)
+#### Raspberry Pi OS / Debian version: 12 (bookworm)
 The network configuration can easily be done with the command nmtui
 ```bash
 sudo nmtui
@@ -273,7 +290,9 @@ In addition to the interface of the power supply shield the pinout of the motorc
   <img src="/images/Motorcontroller.jpg" width="80%"/>
 </p>
 
-When using a generic motor with the EduArt motorcontroller boards the motor has to be wired correctly to match the above pinout description. Below is the motor wiring diagram of a generic motor.The encoder supply voltage +5V and GND are sensitive to reverse voltage. Pay attention when connecting these wires!
+When using a generic motor with the EduArt motorcontroller boards the motor has to be wired correctly to match the above pinout description.
+Below is the motor wiring diagram of a generic motor.
+The encoder supply voltage +5V and GND are sensitive to reverse voltage. Pay attention when connecting these wires!
 
 <p align="center">
   <img src="/images/example_motor.jpg" width="60%"/>
@@ -305,7 +324,7 @@ Suppose you want to develop your own device and read in this data via the CAN bu
 ```c++
   YOURCLASS::YOURCLASS(SocketCAN* can, bool verbosity)
   {
-    // Remeber a reference, if you also want to send data via CAN (see method send)
+    // Remember a reference, if you also want to send data via CAN (see method send)
     _can = can;
   
     // Set CAN input ID of device. Your class uses this ID to send data to the device.
@@ -348,7 +367,7 @@ The following parts list gives you an overview of what you need if you want to b
 * Toggle Switch
 * On button (normally open contact)
 * Charging socket (2.1 mm diameter)
-* Raspberry Pi5 (if you use the RPi5 adapter board, otherwise (Ethernet controler) any computer with Ethernet interface)
+* Raspberry Pi5 (if you use the RPi5 adapter board, otherwise (Ethernet controller) any computer with Ethernet interface)
 * DC-Motors (18V or 24V) with Encoders (recommended is a minimum of 64 CPR)
 * 30V Power supply unit with min. 2.0A current (also available from EduArt)
 
@@ -358,3 +377,54 @@ If you additionally want to use the expansion shield, you will also need:
 * Two-pole Power Connector (214750102[1-3])
 
 You are free to choose the mechanical design of your robot.
+
+
+### Troubleshooting
+
+> 🚫 **The robot does not drive** \
+> The robot remains stationary even when velocity commands are sent. This can be caused by power supply issues, emergency stop activation, communication problems, or incorrect motor controller configuration.
+
+**1. Check power supply configuration**
+   - The charger **must not** be plugged in during operation
+   - **Action:** Remove the charger if connected
+
+**2. Verify emergency stop system**
+   - The emergency stop LED on the PowerManagement Board must be illuminated
+   - **If LED is off:**
+     - Ensure the emergency stop button is not pressed
+     - Verify the emergency stop button wiring is correct
+
+**3. Check motor controller communication**
+   - After enabling the robot, observe the LED on each MotorController shield
+   - The LED should blink when receiving velocity messages
+   - **If LEDs are constantly off:**
+     - Verify that you are sending an `enable` command to the robot
+   - **If LEDs light up briefly then turn off:**
+     - Ensure velocity commands are sent at sufficient frequency (minimum 10 Hz)
+     - Motor controllers automatically disable for safety if commands are too infrequent
+
+**4. Verify motor controller configuration**
+   - If two motors don't behave as expected, check the DIP switches on all shields for correct configuration
+   - Refer to the motor controller documentation for proper DIP switch settings based on your hardware setup
+
+
+> 🚫**Wheels rotate at full speed and don't respond to velocity commands** \
+> This behavior typically indicates an encoder polarity problem. When encoders are wired with reversed polarity, the controller cannot properly regulate motor speed, causing motors to spin uncontrolled.
+
+**1. Adjust encoder inversion parameter**
+   - Open your robot's configuration YAML file (e.g., `edu_drive.yaml`) and locate the `invertEnc` parameter for the affected motors
+   - Toggle the value of the affected motors:
+     - Change `0` to `1`
+     - Change `1` to `0`
+   - Save the file and restart the robot
+   > The `invertEnc` parameter is the same for all motors of a hardware type. If all motors are the same, the parameter must also be the same for all motors.
+
+> 🚫**Wheels rotate in the wrong direction** \
+> You have calculated the kinematic matrix for your robot but some wheels rotate in the wrong direction.
+
+**1. Invert the sign of all elements of the kinematic rows of the affected motors**
+   - Open your robot's configuration YAML file (e.g., `edu_drive.yaml`) and locate the `kinematics` parameter for each affected motor
+   - Invert the sign of all three values in the kinematic vector:
+     - For example, change `[20.0, -20.0, -6.0]` to `[-20.0, 20.0, 6.0]`
+   - Save the file and restart the robot
+   > Each motor has its own kinematic row (a three-dimensional vector). Only modify the rows for motors that rotate in the wrong direction.
