@@ -18,6 +18,9 @@ All three can be used in dependency of the mounted wheels and the configuration 
   - [Software Interface](#software-interface)
   - [What do I need to build my own EduArt robot?](#what-do-i-need-to-build-my-own-eduart-robot)
 - [Troubleshooting](#troubleshooting)
+  - [🚫 The robot does not drive](#-the-robot-does-not-drive)
+  - [🚫 Wheels rotate at full speed and don't respond to velocity commands](#-wheels-rotate-at-full-speed-and-dont-respond-to-velocity-commands)
+  - [🚫 Wheels rotate in the wrong direction](#-wheels-rotate-in-the-wrong-direction)
 
 ## Launching the Robot
 In order to run the robot, you need to launch the appropriate launch file.
@@ -441,7 +444,8 @@ You are free to choose the mechanical design of your robot.
 
 ### Troubleshooting
 
-> 🚫 **The robot does not drive** \
+#### 🚫 The robot does not drive
+> **Error:**
 > The robot remains stationary even when velocity commands are sent.
 > This can be caused by power supply issues, emergency stop activation, communication problems, or incorrect motor controller configuration.
 
@@ -469,7 +473,8 @@ You are free to choose the mechanical design of your robot.
    - Refer to the motor controller documentation for proper DIP switch settings based on your hardware setup
 
 
-> 🚫**Wheels rotate at full speed and don't respond to velocity commands** \
+#### 🚫 Wheels rotate at full speed and don't respond to velocity commands
+> **Error:**
 > This behavior typically indicates an encoder polarity problem.
 > When encoders are wired with reversed polarity, the controller cannot properly regulate motor speed, causing motors to spin uncontrolled.
 
@@ -482,7 +487,8 @@ You are free to choose the mechanical design of your robot.
    > The `invertEnc` parameter is the same for all motors of a hardware type.
    > If all motors are the same, the parameter must also be the same for all motors.
 
-> 🚫**Wheels rotate in the wrong direction** \
+#### 🚫 Wheels rotate in the wrong direction
+> **Error:**
 > You have calculated the kinematic matrix for your robot but some wheels rotate in the wrong direction.
 
 **1. Invert the sign of all elements of the kinematic rows of the affected motors**
