@@ -7,10 +7,10 @@ Software installed in this guide:
 - ROS 2 Humble
 
 ### 1. Flash microSD card
-To flash the microSD card we recommend using the [RPi Imager](https://www.raspberrypi.com/software/) which can be installed on Linux, Windows and macOS. On Ubuntu, use the command `sudo apt install rpi-imager`. After starting the software, choose your device, Ubuntu 23.10 Server as the operating system and microSD card. After pressing *Next* you can change some aditional settings like your passwords or username. We recommend to setup at least your WiFi and ssh connection.
+To flash the microSD card we recommend using the [RPi Imager](https://www.raspberrypi.com/software/) which can be installed on Linux, Windows and macOS. On Ubuntu, use the command `sudo apt install rpi-imager`. After starting the software, choose your device, Ubuntu 23.10 Server as the operating system and microSD card. After pressing *Next* you can change some additional settings like your passwords or username. We recommend to setup at least your WiFi and ssh connection.
 
 ### 2. Connect to your Raspberry Pi
-After inserting the microSD card and powering up the Raspberry Pi, connect to the Rasperry via ssh. The command follows the layout `ssh <username>@<ip-address>`. To find out the IP, have a look into your router or use the `nmap` tool to list all available devices in your network.
+After inserting the microSD card and powering up the Raspberry Pi, connect to the Raspberry via ssh. The command follows the layout `ssh <username>@<ip-address>`. To find out the IP, have a look into your router or use the `nmap` tool to list all available devices in your network.
 
 ### 3. Update and install packages
 ```bash

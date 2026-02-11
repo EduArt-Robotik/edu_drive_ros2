@@ -76,12 +76,12 @@ int Odometry::update(edu::Vec mot_pos_vec)
             }
         }
 
-        // Calculate new position in robot ksys
+        // Calculate new position in robot coordinate system
         edu::Vec vTwist = _invKinematics * vOmega;
 
         if(std::none_of(vTwist.begin(), vTwist.end(), [](double i){ return std::isnan(i) || std::isinf(i); }))
         {
-            // Calculate new position in odom ksys
+            // Calculate new position in odom coordinate system
             status = propagate_position(vTwist);
         }else{
             status = -1;
@@ -130,7 +130,7 @@ int Odometry::update(uint64_t time_ns, edu::Vec mot_vel_vec)
 
         if(std::none_of(vTwist.begin(), vTwist.end(), [](double i){ return std::isnan(i) || std::isinf(i); }))
         {
-            // Calculate new position in odom ksys
+            // Calculate new position in odom coordinate system
             status = propagate_position(vTwist);
         }else{
             status = -1;
@@ -156,17 +156,17 @@ int Odometry::propagate_position(edu::Vec twistVec)
     // Euclidean distance of last move
     double ds = sqrt(dx*dx+dy*dy);
 
-    // Direction of last move in world ksys
+    // Direction of last move in world coordinate system
     double alpha = _pose.theta + atan2(dy, dx);
 
     // Turn radius of last move
     double r = ds/dtheta;
 
-    // Calculate movement in world ksys
+    // Calculate movement in world coordinate system
     double dx_world = 0;
     double dy_world = 0;
-    if(dtheta < _straigt_line_threshold){
-        // Straigt line move
+    if(dtheta < _straight_line_threshold){
+        // Straight line move
         dx_world = ds * cos(alpha);
         dy_world = ds * sin(alpha);
     }else{

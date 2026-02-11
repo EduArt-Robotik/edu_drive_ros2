@@ -62,7 +62,7 @@ namespace edu
         OdometryMode get_mode();
 
         /**
-         * Check if odometry postition-model is initialized
+         * Check if odometry position-model is initialized
         */
        bool is_pos_init();
 
@@ -78,8 +78,8 @@ namespace edu
 
         /**
          * Update odometry estimation with new wheel positions
-         * Absolute postion or change in position depends on odometry_mode setting
-         * @param[in] mot_pos_vec Vector of the motor postion. Either absolute or relative position depending on the OdometryMode setting
+         * Absolute position or change in position depends on odometry_mode setting
+         * @param[in] mot_pos_vec Vector of the motor position. Either absolute or relative position depending on the OdometryMode setting
          * @retval status 1: o.k., status -1: error in last step (no update)
          */
         int update(edu::Vec mot_pos_vec);
@@ -96,8 +96,8 @@ namespace edu
     private:
 
         /**
-         * Calculate pose-cange in world coordinate system
-         * @param[in] twistVec Twist vector describing change in x, y and theta in the robot ksys
+         * Calculate pose-change in world coordinate system
+         * @param[in] twistVec Twist vector describing change in x, y and theta in the robot coordinate system
          * @retval status 1: o.k., status -1: error in calculation
          */
         int propagate_position(edu::Vec twistVec);
@@ -105,7 +105,7 @@ namespace edu
         Pose _pose;
         OdometryMode _odometry_mode;
 
-        const double _straigt_line_threshold = 0.001F;
+        const double _straight_line_threshold = 0.001F;
         bool _is_pos_init;
         bool _is_vel_init;
 
