@@ -498,3 +498,13 @@ You are free to choose the mechanical design of your robot.
    - Save the file and restart the robot
    > Each motor has its own kinematic row (a three-dimensional vector).
    > Only modify the rows for motors that rotate in the wrong direction.
+
+#### 🚫 The enable signal is sometimes reset for no reason
+> **Error:**
+> Sometimes, for example while driving, the motors stop responding. If you then resend the enable signal, everything works again.
+
+**1. Increase the update rate of the sent joystick messages**
+  - Add the autorepeat_rate parameter when starting the joy node, e.g.
+```bash
+ros2 run joy joy_node --ros-args -p autorepeat_rate:=25.0
+```
