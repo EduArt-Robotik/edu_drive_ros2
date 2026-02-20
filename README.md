@@ -506,5 +506,12 @@ You are free to choose the mechanical design of your robot.
 **1. Increase the update rate of the sent joystick messages**
   - Add the autorepeat_rate parameter when starting the joy node, e.g.
 ```bash
-ros2 run joy joy_node --ros-args -p autorepeat_rate:=25.0
+ros2 run joy joy_node --ros-args -p autorepeat_rate:=25.0 --remap joy:=YOUR_DESIRED_TOPIC
+```
+
+**2. Change to joy_linux_node**
+  - joy_node might not send messages equidistantly. We have observed dropped messages, i.e., a large jitter. Install and use the package joy_linux instead.
+```bash
+sudo apt install ros-$ROS_DISTRO-joy-linux
+ros2 run joy_linux joy_linux_node --ros-args -p autorepeat_rate:=25.0 --remap joy:=YOUR_DESIRED_TOPIC
 ```
