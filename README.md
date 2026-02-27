@@ -441,6 +441,8 @@ If you additionally want to use the expansion shield, you will also need:
 
 You are free to choose the mechanical design of your robot.
 
+### Make your robot wireless
+If the robot is not to be operated exclusively autonomously, a robust wireless connection is necessary. Although the Raspberry also offers an integrated WLAN module, it is not nearly as powerful as two coupled routers. For example, we have had good experiences with two routers from GL.iNet. The AX-1800 setup for the operator station and AXT-1800 as a mobile router on the robot demonstrated robust characteristics. The AX-1800 is configured as router and the AXT-1800 in extension mode. Make sure that both routers are configured with the same country setting. Our routers had two different active country codes. The routers used should also have the option of limiting themselves to specific channels. In competitive situations, each team is often assigned a specific channel.
 
 ### Troubleshooting
 
