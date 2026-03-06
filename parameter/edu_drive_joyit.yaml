@@ -5,7 +5,7 @@
 # Motor Voltage: 6 V -> maxPulseWidth: 25
 # Rated RPM: 200
 # Gear Ratio: 21.3
-# Encoder: 11 pulses per revolution
+# Encoder: 11 pulses per revolution (needs to be multiplied by 4)
 #
 # TODO: Calculate third value of kinematics vector!
 ###
@@ -33,16 +33,16 @@
         channel: 0
         kinematics: [30.77, 30.77, 6.1]
         gearRatio: 21.3
-        encoderRatio: 11.0
+        encoderRatio: 44.0
         rpmMax: 200.0
-        invertEnc: 1
+        invertEnc: 0
       drive1: #rear right
         channel: 1
         kinematics: [30.77, -30.77, 6.1]
         gearRatio: 21.3
-        encoderRatio: 11.0
+        encoderRatio: 44.0
         rpmMax: 200.0
-        invertEnc: 1
+        invertEnc: 0
 
     controller1:
       canID: 1
@@ -50,13 +50,13 @@
         channel: 0
         kinematics: [-30.77, 30.77, 6.1]
         gearRatio: 21.3
-        encoderRatio: 11.0
+        encoderRatio: 44.0
         rpmMax: 200.0
-        invertEnc: 1
+        invertEnc: 0
       drive1: #rear left
         channel: 1
         kinematics: [-30.77, -30.77, 6.1]
         gearRatio: 21.3
-        encoderRatio: 11.0
+        encoderRatio: 44.0
         rpmMax: 200.0
-        invertEnc: 1
+        invertEnc: 0
