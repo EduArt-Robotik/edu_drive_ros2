@@ -9,7 +9,9 @@
 namespace edu
 {
 
-MotorController::MotorController(SocketCAN* can, ControllerParams params, bool verbosity) : _params(params), _verbosity(verbosity)
+MotorController::MotorController(SocketCAN* can, ControllerParams params, bool verbosity)
+  : _params(params),
+    _verbosity(verbosity)
 {
   _isInit    = false;
   
@@ -72,6 +74,11 @@ bool MotorController::isInitialized()
 
 void MotorController::init()
 {
+  if(!requestFirmwareVersion(100ms))
+  {
+    std::cout << "#MotorController legacy firmware detected on controller " << _params.canID << ". Can't set individual motor parameters per channel." << std::endl;
+  }
+
   _rpm[0] = 0.f;
   _rpm[1] = 0.f;
 
@@ -263,7 +270,7 @@ unsigned short MotorController::getTimeout()
 bool MotorController::setGearRatio(float gearRatio[2])
 {
   bool retval  = sendFloat(CMD_MOTOR_GEARRATIO,  gearRatio[0]);
-  retval      &= sendFloat(CMD_MOTOR_GEARRATIO2, gearRatio[1]);
+  retval      &= sendFloat(CMD_MOTOR_GEARRATIO, gearRatio[1]); // ToDo: Fix
   if(retval){
     _params.motorParams[0].gearRatio = gearRatio[0];
     _params.motorParams[1].gearRatio = gearRatio[1];
@@ -279,7 +286,7 @@ float MotorController::getGearRatio(size_t motor_num)
 bool MotorController::setEncoderTicksPerRev(float encoderTicksPerRev[2])
 {
   bool retval  = sendFloat(CMD_MOTOR_TICKSPERREV,  encoderTicksPerRev[0]);
-  retval      &= sendFloat(CMD_MOTOR_TICKSPERREV2, encoderTicksPerRev[1]);
+  retval      &= sendFloat(CMD_MOTOR_TICKSPERREV, encoderTicksPerRev[1]); //ToDo: Fix
   if(retval){
     _params.motorParams[0].encoderRatio = encoderTicksPerRev[0];
     _params.motorParams[1].encoderRatio = encoderTicksPerRev[1];
@@ -442,6 +449,29 @@ float MotorController::getInputWeight()
   return _params.inputWeight;
 }
 
+Version MotorController::getFirmwareVersion()
+{
+  return _version;
+}
+
+bool MotorController::requestFirmwareVersion(std::chrono::milliseconds timeout)
+{
+  _cf.can_dlc = 1;
+  _cf.data[0] = CMD_MOTOR_GET_FIRMWARE;
+  _can->send(&_cf);
+
+  auto startTime = std::chrono::steady_clock::now();
+
+  if(timeout > 0ms){
+    while((!_version.isValid()) && ((std::chrono::steady_clock::now() - startTime) < timeout))
+    {
+      std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    }
+  }
+
+  return _version.isValid();
+}
+
 void MotorController::notify(struct can_frame* frame)
 {
   if(frame->can_dlc==6)
@@ -466,6 +496,16 @@ void MotorController::notify(struct can_frame* frame)
     _enabled = (frame->data[5] != 0);
     if(_verbosity)
 	    std::cout << "MotorController CANID " << _cf.can_id << " received data" << std::endl;
+  }
+  else if(frame->can_dlc==8){
+    if(frame->data[0] == RESPONSE_MOTOR_PARAMETER && frame->data[1] == CMD_MOTOR_GET_FIRMWARE)
+    {
+      _version.major = (frame->data[3] | (frame->data[2] << 8));
+      _version.minor = (frame->data[5] | (frame->data[4] << 8));
+      _version.patch = (frame->data[7] | (frame->data[6] << 8));
+      if(_verbosity)
+        std::cout << "MotorController CANID " << _cf.can_id << " firmware version: " << (int)_version.major << "." << (int)_version.minor << "." << (int)_version.patch << std::endl;
+    }
   }
 }
 

@@ -2,9 +2,36 @@
 
 #include "can/SocketCAN.h"
 #include <vector>
+#include <chrono>
+#include <tuple>
 
 namespace edu
 {
+
+  using namespace std::chrono_literals;
+
+  struct Version
+  {
+    uint16_t major = 0;
+    uint16_t minor = 0;
+    uint16_t patch = 0;
+
+    inline bool operator== (const Version& other) const{
+      return (major == other.major) && (minor == other.minor) && (patch == other.patch);
+    }
+
+    inline bool operator< (const Version& other) const{
+      return std::tie(major, minor, patch) < std::tie(other.major, other.minor, other.patch);
+    }
+
+    inline bool operator> (const Version& other) const{
+      return other < *this;
+    }
+
+    inline bool isValid() const{
+      return (major != 0) || (minor != 0) || (patch != 0);
+    }
+  };
 
   enum CanResponse
   {
@@ -361,6 +388,12 @@ namespace edu
     float getInputWeight();
 
     /**
+     * Accessor to firmware version on the motorcontroller.
+     * @return firmware version
+     */
+    Version getFirmwareVersion();
+
+    /**
      * Stop motors
      */
     void stop();
@@ -374,6 +407,8 @@ namespace edu
     void init();
     
     bool sendFloat(int cmd, float f);
+
+    bool requestFirmwareVersion(std::chrono::milliseconds timeout = 100ms);
 
     /**
      * Implementation of inherited method from SocketCANObserver. This class is getting notified by the SocketCAN,
@@ -407,6 +442,8 @@ namespace edu
     long _seconds;
 
     long _usec;
+
+    Version _version;
   };
 
 }

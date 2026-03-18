@@ -47,6 +47,9 @@ namespace edu
 #define CMD_MOTOR_SENDRPM         0x05
 #define CMD_MOTOR_SENDPOS         0x06
 #define CMD_MOTOR_INVERTENC       0x07
+#define CMD_MOTOR_CLOSED_LOOP     0x08
+#define CMD_MOTOR_OPEN_LOOP       0x09
+#define CMD_MOTOR_GET_FIRMWARE    0x0A
 
 // Operating commands
 #define CMD_MOTOR_SETPWM          0x10
@@ -63,13 +66,12 @@ namespace edu
 
 // Platform parameters
 #define CMD_MOTOR_GEARRATIO       0x30
-#define CMD_MOTOR_GEARRATIO2      0x31
 #define CMD_MOTOR_TICKSPERREV     0x32
-#define CMD_MOTOR_TICKSPERREV2    0x33
 
 // Standard responses
 #define RESPONSE_MOTOR_RPM        0xA0
 #define RESPONSE_MOTOR_POS        0xA1
+#define RESPONSE_MOTOR_PARAMETER  0xA2
 
 // Error responses
 #define ERR_ENCA_NOSIGNAL   0xE0
