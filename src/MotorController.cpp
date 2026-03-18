@@ -5,6 +5,7 @@
 #include <iomanip>
 #include <unistd.h>
 #include "can/canprotocol.h"
+#include "rclcpp/rclcpp.hpp"
 
 namespace edu
 {
@@ -51,8 +52,8 @@ MotorController::MotorController(SocketCAN* can, ControllerParams params, bool v
   _can       = can;
   makeCanStdID(SYSID_MC2, params.canID, &_inputAddress, &_outputAddress, &_broadcastAddress);
   _cf.can_id = _inputAddress;
-  if(verbosity)
-    std::cout << "#MotorController CAN Input ID: " << _inputAddress << " CAN Output ID: " << _outputAddress << std::endl;
+
+  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("MotorController"), "#MotorController CAN Input ID: " << _inputAddress << " CAN Output ID: " << _outputAddress << std::endl);
 
   canid_t canidOutput = _outputAddress;
 
@@ -76,7 +77,7 @@ void MotorController::init()
 {
   if(!requestFirmwareVersion(100ms))
   {
-    std::cout << "#MotorController legacy firmware detected on controller " << _params.canID << ". Can't set individual motor parameters per channel." << std::endl;
+    RCLCPP_INFO_STREAM(rclcpp::get_logger("MotorController"), "#MotorController legacy firmware detected on controller " << _params.canID << ". Can't set individual motor parameters per channel." << std::endl);
   }
 
   _rpm[0] = 0.f;
@@ -88,82 +89,82 @@ void MotorController::init()
   
   if(!disable())
   {
-    std::cout << "#MotorController Failed to disable device " << _params.canID << std::endl;
+    RCLCPP_ERROR_STREAM(rclcpp::get_logger("MotorController"), "#MotorController Failed to disable device " << _params.canID << std::endl);
     retval = false;
   }
   
   if(!setFrequencyScale(_params.frequencyScale))
   {
-    std::cout << "#MotorController Setting frequency scaling parameter failed for device " << _params.canID << std::endl;
+    RCLCPP_ERROR_STREAM(rclcpp::get_logger("MotorController"), "#MotorController Setting frequency scaling parameter failed for device " << _params.canID << std::endl);
     retval = false;
   }
   
   if(!setInputWeight(_params.inputWeight))
   {
-    std::cout << "#MotorController Setting differential factor of PID controller failed for device " << _params.canID << std::endl;
+    RCLCPP_ERROR_STREAM(rclcpp::get_logger("MotorController"), "#MotorController Setting differential factor of PID controller failed for device " << _params.canID << std::endl);
     retval = false;
   }
   
   if(!setMaxPulseWidth(_params.maxPulseWidth))
   {
-    std::cout << "#MotorController Setting maximum pulse width failed for device " << _params.canID << std::endl;
+    RCLCPP_ERROR_STREAM(rclcpp::get_logger("MotorController"), "#MotorController Setting maximum pulse width failed for device " << _params.canID << std::endl);
     retval = false;
   }
 
   if(!setTimeout(_params.timeout))
   {
-    std::cout << "#MotorController Setting timeout failed for device " << _params.canID << std::endl;
+    RCLCPP_ERROR_STREAM(rclcpp::get_logger("MotorController"), "#MotorController Setting timeout failed for device " << _params.canID << std::endl);
     retval = false;
   }
   
   float gearRatios[] = {_params.motorParams[0].gearRatio, _params.motorParams[1].gearRatio};
   if(!setGearRatio(gearRatios))
   {
-    std::cout << "#MotorController Setting gear ratio failed for device " << _params.canID << std::endl;
+    RCLCPP_ERROR_STREAM(rclcpp::get_logger("MotorController"), "#MotorController Setting gear ratio failed for device " << _params.canID << std::endl);
     retval = false;
   }
   
   float ticksPerRev[] = {_params.motorParams[0].encoderRatio, _params.motorParams[1].encoderRatio};
   if(!setEncoderTicksPerRev(ticksPerRev))
   {
-    std::cout << "#MotorController Setting encoder parameters failed for device " << _params.canID << std::endl;
+    RCLCPP_ERROR_STREAM(rclcpp::get_logger("MotorController"), "#MotorController Setting encoder parameters failed for device " << _params.canID << std::endl);
     retval = false;
   }
   
   if(!setKp(_params.kp))
   {
-    std::cout << "#MotorController Setting proportional factor of PID controller failed for device " << _params.canID << std::endl;
+    RCLCPP_ERROR_STREAM(rclcpp::get_logger("MotorController"), "#MotorController Setting proportional factor of PID controller failed for device " << _params.canID << std::endl);
     retval = false;
   }
   
   if(!setKi(_params.ki))
   {
-    std::cout << "#MotorController Setting integration factor of PID controller failed for device " << _params.canID << std::endl;
+    RCLCPP_ERROR_STREAM(rclcpp::get_logger("MotorController"), "#MotorController Setting integration factor of PID controller failed for device " << _params.canID << std::endl);
     retval = false;
   }
   
   if(!setKd(_params.kd))
   {
-    std::cout << "#MotorController Setting differential factor of PID controller failed for device " << _params.canID << std::endl;
+    RCLCPP_ERROR_STREAM(rclcpp::get_logger("MotorController"), "#MotorController Setting differential factor of PID controller failed for device " << _params.canID << std::endl);
     retval = false;
   }
   
   if(!setAntiWindup(_params.antiWindup))
   {
-    std::cout << "#MotorController Setting differential factor of PID controller failed for device " << _params.canID << std::endl;
+    RCLCPP_ERROR_STREAM(rclcpp::get_logger("MotorController"), "#MotorController Setting anti-windup factor of PID controller failed for device " << _params.canID << std::endl);
     retval = false;
   }
   
   if(!configureResponse(_params.responseMode))
   {
-    std::cout << "#MotorController Setting response mode failed for device " << _params.canID << std::endl;
+    RCLCPP_ERROR_STREAM(rclcpp::get_logger("MotorController"), "#MotorController Setting response mode failed for device " << _params.canID << std::endl);
     retval = false;
   }
   
   bool invertEnc[] = {(bool)_params.motorParams[0].invertEnc, (bool)_params.motorParams[1].invertEnc};
   if(!invertEncoderPolarity(invertEnc))
   {
-    std::cout << "#MotorController Setting encoder polarity failed for device " << _params.canID << std::endl;
+    RCLCPP_ERROR_STREAM(rclcpp::get_logger("MotorController"), "#MotorController Setting encoder polarity failed for device " << _params.canID << std::endl);
     retval = false;
   }
   
@@ -175,8 +176,8 @@ void MotorController::init()
   }
   else
   {
-    std::cout << "#MotorController ERROR initializing motor controller with ID " << _params.canID << std::endl;
-    std::cout << "-----------------------------------------------";
+    RCLCPP_ERROR_STREAM(rclcpp::get_logger("MotorController"), "#MotorController ERROR initializing motor controller with ID " << _params.canID << std::endl);
+    RCLCPP_ERROR_STREAM(rclcpp::get_logger("MotorController"), "-----------------------------------------------");
   }
 }
 
@@ -187,7 +188,7 @@ void MotorController::deinit()
 
 void MotorController::reinit()
 {
-  std::cout << "#MotorController Reinitializing device " << _params.canID << std::endl;
+  RCLCPP_INFO_STREAM(rclcpp::get_logger("MotorController"), "#MotorController Reinitializing device " << _params.canID << std::endl);
   init();
 }
 
@@ -494,8 +495,8 @@ void MotorController::notify(struct can_frame* frame)
       _pos[1] = (frame->data[3] | (frame->data[4] << 8));
     }
     _enabled = (frame->data[5] != 0);
-    if(_verbosity)
-	    std::cout << "MotorController CANID " << _cf.can_id << " received data" << std::endl;
+
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("MotorController"), "MotorController CANID " << _cf.can_id << " received data" << std::endl);
   }
   else if(frame->can_dlc==8){
     if(frame->data[0] == RESPONSE_MOTOR_PARAMETER && frame->data[1] == CMD_MOTOR_GET_FIRMWARE)
@@ -503,8 +504,8 @@ void MotorController::notify(struct can_frame* frame)
       _version.major = (frame->data[3] | (frame->data[2] << 8));
       _version.minor = (frame->data[5] | (frame->data[4] << 8));
       _version.patch = (frame->data[7] | (frame->data[6] << 8));
-      if(_verbosity)
-        std::cout << "MotorController CANID " << _cf.can_id << " firmware version: " << (int)_version.major << "." << (int)_version.minor << "." << (int)_version.patch << std::endl;
+
+      RCLCPP_DEBUG_STREAM(rclcpp::get_logger("MotorController"), "MotorController has firmware version " << (int)_version.major << "." << (int)_version.minor << "." << (int)_version.patch << std::endl);
     }
   }
 }
