@@ -408,6 +408,8 @@ namespace edu
     
     bool sendFloat(int cmd, float f);
 
+    bool sendFloat(int cmd, float f, int channel);
+
     bool requestFirmwareVersion(std::chrono::milliseconds timeout = 100ms);
 
     /**

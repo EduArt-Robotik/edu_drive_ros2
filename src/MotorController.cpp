@@ -270,8 +270,9 @@ unsigned short MotorController::getTimeout()
 
 bool MotorController::setGearRatio(float gearRatio[2])
 {
-  bool retval  = sendFloat(CMD_MOTOR_GEARRATIO,  gearRatio[0]);
-  retval      &= sendFloat(CMD_MOTOR_GEARRATIO, gearRatio[1]); // ToDo: Fix
+  bool retval  = sendFloat(CMD_MOTOR_GEARRATIO, gearRatio[0], 0);
+  retval      &= sendFloat(CMD_MOTOR_GEARRATIO, gearRatio[1], 1);
+
   if(retval){
     _params.motorParams[0].gearRatio = gearRatio[0];
     _params.motorParams[1].gearRatio = gearRatio[1];
@@ -286,8 +287,8 @@ float MotorController::getGearRatio(size_t motor_num)
 
 bool MotorController::setEncoderTicksPerRev(float encoderTicksPerRev[2])
 {
-  bool retval  = sendFloat(CMD_MOTOR_TICKSPERREV,  encoderTicksPerRev[0]);
-  retval      &= sendFloat(CMD_MOTOR_TICKSPERREV, encoderTicksPerRev[1]); //ToDo: Fix
+  bool retval  = sendFloat(CMD_MOTOR_TICKSPERREV, encoderTicksPerRev[0], 0);
+  retval      &= sendFloat(CMD_MOTOR_TICKSPERREV, encoderTicksPerRev[1], 1);
   if(retval){
     _params.motorParams[0].encoderRatio = encoderTicksPerRev[0];
     _params.motorParams[1].encoderRatio = encoderTicksPerRev[1];
@@ -529,6 +530,21 @@ bool MotorController::sendFloat(int cmd, float f)
   _cf.data[2] = (*ival & 0x00FF0000) >> 16;
   _cf.data[3] = (*ival & 0x0000FF00) >> 8;
   _cf.data[4] = (*ival & 0x000000FF);
+
+  return _can->send(&_cf);
+}
+
+bool MotorController::sendFloat(int cmd, float f, int channel)
+{
+  _cf.can_dlc = 6;
+
+  _cf.data[0] = cmd;
+  int* ival = (int*)&f;
+  _cf.data[1] = (*ival & 0xFF000000) >> 24;
+  _cf.data[2] = (*ival & 0x00FF0000) >> 16;
+  _cf.data[3] = (*ival & 0x0000FF00) >> 8;
+  _cf.data[4] = (*ival & 0x000000FF);
+  _cf.data[5] = channel;
 
   return _can->send(&_cf);
 }
