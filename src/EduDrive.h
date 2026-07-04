@@ -81,6 +81,9 @@ public:
 
 private:
 
+    static constexpr float RADS2RPM = 60.0f / (2.0f * M_PI);
+    static constexpr float RPM2RADS = (2.0f * M_PI) / 60.0f;
+
     void hardwareWorker();
 
     void checkLaggyConnection();
@@ -124,6 +127,7 @@ private:
     std::vector<std::unique_ptr<MotorController>>   _mc;            // Vector containing pointer to all motor controller instances
 
     double _vMax;
+    double _rpmMaxRad;
     double _omegaMax;
     double _servoPos;
 

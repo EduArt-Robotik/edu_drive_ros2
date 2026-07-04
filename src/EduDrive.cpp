@@ -53,6 +53,7 @@ void EduDrive::initDrive(std::vector<ControllerParams> cp, std::shared_ptr<Socke
     _pwr_mgmt  = std::make_unique<PowerManagementBoard>(can.get(), verbosity);
 
     _vMax = 0.f;
+    _rpmMaxRad = 0.f;
 
     bool isKinematicsValid = true;
     for (unsigned int i = 0; i < cp.size(); ++i)
@@ -83,14 +84,16 @@ void EduDrive::initDrive(std::vector<ControllerParams> cp, std::shared_ptr<Socke
             double kx = kinematics[0];
             double kw = kinematics[2];
             float rpmMax = std::min(cp[i].motorParams[0].rpmMax, cp[i].motorParams[1].rpmMax); // the slowest motor determines the maximum speed of the system
+            float rpmMaxRad = rpmMax * RPM2RADS;
+            if (rpmMaxRad > _rpmMaxRad) _rpmMaxRad = rpmMaxRad;
             if(fabs(kx)>1e-3)
             {
-                float vMax = fabs(rpmMax / 60.f * (2.f * M_PI) / kx);
+                float vMax = fabs(rpmMax * RPM2RADS / kx);
                 if(vMax > _vMax) _vMax = vMax;
             }
             if(fabs(kw)>1e-3)
             {
-                float omegaMax = fabs(rpmMax / 60.f * (2.f * M_PI) / kw);
+                float omegaMax = fabs(rpmMax * RPM2RADS / kw);
                 if(omegaMax > _omegaMax) _omegaMax = omegaMax;
                 }
         }
@@ -250,22 +253,38 @@ bool EduDrive::enableCallback(const std::shared_ptr<rmw_request_id_t> header, co
 
 void EduDrive::controlMotors(float vFwd, float vLeft, float omega)
 {
+    if (_mc.empty()) return;
+
     _lastCmd = this->get_clock()->now();
-        
+
+    std::vector<std::array<float, 2>> motors(_mc.size());
+    float rpmMaxRad = 0.0f;
+
     for (unsigned int i = 0; i < _mc.size(); ++i)
     {
-        std::vector<double> kinematics0 = _mc[i]->getMotorParams()[0].kinematics;
-        std::vector<double> kinematics1 = _mc[i]->getMotorParams()[1].kinematics;
-        float w[2];
-        w[0] = kinematics0[0] * vFwd + kinematics0[1] * vLeft + kinematics0[2] * omega;
-        w[1] = kinematics1[0] * vFwd + kinematics1[1] * vLeft + kinematics1[2] * omega;
+        std::vector<double> kin0 = _mc[i]->getMotorParams()[0].kinematics;
+        std::vector<double> kin1 = _mc[i]->getMotorParams()[1].kinematics;
 
-        // Convert from rad/s to rpm
-        w[0] *= 60.f / (2.f * M_PI);
-        w[1] *= 60.f / (2.f * M_PI);
+        motors[i][0] = static_cast<float>(kin0[0] * vFwd + kin0[1] * vLeft + kin0[2] * omega);
+        motors[i][1] = static_cast<float>(kin1[0] * vFwd + kin1[1] * vLeft + kin1[2] * omega);
+
+        rpmMaxRad = std::max(rpmMaxRad, std::abs(motors[i][0]));
+        rpmMaxRad = std::max(rpmMaxRad, std::abs(motors[i][1]));
+    }
+
+    float scale = 1.0f;
+    if (rpmMaxRad > _rpmMaxRad)
+        scale = _rpmMaxRad / rpmMaxRad;
+
+    for (unsigned int i = 0; i < _mc.size(); ++i)
+    {
+        float w[2] = {
+            motors[i][0] * scale * RADS2RPM,
+            motors[i][1] * scale * RADS2RPM
+        };
         _mc[i]->setRPM(w);
+
         if (_verbosity)
-            //std::cout << "#EduDrive Setting RPM for drive" << i << " to " << w[0] << " " << w[1] << std::endl;
             RCLCPP_INFO_STREAM(this->get_logger(), "#EduDrive Setting RPM for drive" << i << " to " << w[0] << " " << w[1]);
     }
 }
