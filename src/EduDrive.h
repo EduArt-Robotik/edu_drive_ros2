@@ -127,7 +127,6 @@ private:
     std::vector<std::unique_ptr<MotorController>>   _mc;            // Vector containing pointer to all motor controller instances
 
     double _vMax;
-    double _rpmMaxRad;
     double _omegaMax;
     double _servoPos;
 
