@@ -156,31 +156,40 @@ void EduDrive::disable()
 
 void EduDrive::joyCallback(const sensor_msgs::msg::Joy::SharedPtr joy)
 {
+    auto axis = [&](size_t idx, double fallback = 0.0) -> double
+    {
+        return (idx < joy->axes.size()) ? joy->axes[idx] : fallback;
+    };
+    auto button = [&](size_t idx) -> int32_t
+    {
+        return (idx < joy->buttons.size()) ? joy->buttons[idx] : 0;
+    };
+
     // Assignment of joystick axes to motor commands
-    double fwd      = joy->axes[1];                // Range of values [-1:1]
-    double left     = joy->axes[0];                // Range of values [-1:1]
-    double turn     = joy->axes[2];                // Range of values [-1:1]
-    double throttle = (joy->axes[3] + 1.0) / 2.0; // Range of values  [0:1]
+    double fwd      = axis(1);              // Range of values [-1:1]
+    double left     = axis(0);              // Range of values [-1:1]
+    double turn     = axis(2);              // Range of values [-1:1]
+    double throttle = (axis(3, -1.0) + 1.0) / 2.0; // Range of values  [0:1]
 
     // Enable movement in the direction of the y-axis only when the button 12 is pressed
-    if (!joy->buttons[11])
+    if (!button(11))
         left = 0;
 
     // Forward / Backward basic orientation
     double servoPos = _servoPos;
-    if(joy->buttons[2])
+    if(button(2))
     {
         _servoPos = 45.0;
     }
-    else if(joy->buttons[3])
+    else if(button(3))
     {
         _servoPos = 225.0;
     }
 
     // Coolie hat fine positioning
-    if(joy->axes[4]==1)
+    if(axis(4) == 1.0)
         _servoPos += 1.0;
-    if(joy->axes[4]==-1)
+    if(axis(4) == -1.0)
         _servoPos -= 1.0;
     
     if(_servoPos < 0.0)
@@ -203,20 +212,20 @@ void EduDrive::joyCallback(const sensor_msgs::msg::Joy::SharedPtr joy)
         angles[7] = 275;
         _extension->setServos(angles);
 }
-    static int32_t btn9Prev  = joy->buttons[9];
-    static int32_t btn10Prev = joy->buttons[10];
+    static int32_t btn9Prev  = button(9);
+    static int32_t btn10Prev = button(10);
 
-    if (joy->buttons[9] && !btn9Prev)
+    if (button(9) && !btn9Prev)
     {
         disable();
     }
-    else if (joy->buttons[10] && !btn10Prev)
+    else if (button(10) && !btn10Prev)
     {
         enable();
     }
 
-    btn9Prev    = joy->buttons[9];
-    btn10Prev   = joy->buttons[10];
+    btn9Prev    = button(9);
+    btn10Prev   = button(10);
 
     double vFwd  = throttle * fwd  * _vMax;
     double vLeft = throttle * left * _vMax;
