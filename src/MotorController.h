@@ -50,17 +50,17 @@ namespace edu
     enum CanResponse responseMode;
     
     int invertEnc;
-    float gearRatio;
-    float encoderRatio;
-    float rpmMax;
+    double gearRatio;
+    double encoderRatio;
+    double rpmMax;
     
     MotorParams()
     {
       channel       = 0;
       invertEnc     = 0;
-      gearRatio     = 0.0f;
-      encoderRatio  = 0.0f;
-      rpmMax        = 0.0f;
+      gearRatio     = 0.0;
+      encoderRatio  = 0.0;
+      rpmMax        = 0.0;
       kinematics.clear();
       responseMode = CAN_RESPONSE_RPM;
     }
@@ -88,12 +88,12 @@ namespace edu
 
     // Control parameters
     unsigned short frequencyScale;
-    float inputWeight;
+    double inputWeight;
     unsigned char maxPulseWidth;
     unsigned short timeout;
-    float kp;
-    float ki;
-    float kd;
+    double kp;
+    double ki;
+    double kd;
     int antiWindup;
 
     CanResponse responseMode;
@@ -106,17 +106,17 @@ namespace edu
     {
       canID = 0;
       frequencyScale = 32;
-      inputWeight = 0.8f;
+      inputWeight = 0.8;
       maxPulseWidth = 50;
       timeout = 300;
-      kp = 0.f;
-      ki = 0.f;
-      kd = 0.f;
+      kp = 0.0;
+      ki = 0.0;
+      kd = 0.0;
       antiWindup = 1;
       responseMode = CAN_RESPONSE_RPM;
 
       motorParams.resize(2);
-      std::vector<double> zeroKinematic{0.f, 0.f, 0.f};
+      std::vector<double> zeroKinematic{0.0, 0.0, 0.0};
       motorParams[0].channel = 0;
       motorParams[0].kinematics = zeroKinematic;
       motorParams[1].channel = 1;
@@ -251,26 +251,26 @@ namespace edu
      * @param[in] gearRatio (motor rev) / (wheel rev) for motor 1 and 2 separately
      * @return true==successful CAN transmission
      */
-    bool setGearRatio(float gearRatio[2]);
+    bool setGearRatio(double gearRatio[2]);
 
     /**
      * Accessor to gear ratio parameter
      * @return gearRatio (motor rev) / (wheel rev) for motor 1 and 2
      */
-    float getGearRatio(size_t motor_num);
+    double getGearRatio(size_t motor_num);
 
     /**
      * Set number of encoder ticks per motor revolution
      * @param[in] encoderTicksPerRev encoder ticks per motor revolution for motor 1 and 2
      * @return true==successful CAN transmission
      */
-    bool setEncoderTicksPerRev(float encoderTicksPerRev[2]);
+    bool setEncoderTicksPerRev(double encoderTicksPerRev[2]);
 
     /**
      * Accessor to parameter representing encoder ticks per motor revolution
      * @return encoder ticks per motor revolution for motor 1 and 2
      */
-    float getEncoderTicksPerRev(size_t motor_num);
+    double getEncoderTicksPerRev(size_t motor_num);
 
     /**
      * Set scaling parameter for PWM frequency. The base frequency is 500kHz, of which one can apply a fractional amount, e.g.
@@ -315,52 +315,52 @@ namespace edu
      * @param[in] rpm set point value, this device supports 2 channels
      * @return success
      */
-    bool setRPM(float rpm[2]);
+    bool setRPM(double rpm[2]);
 
     /**
      * Get either motor revolutions per minute or motor position (encoder ticks). This depends on the configuration canResponseMode.
      * @param[out] response revolutions per minute for motor 1 and 2 / position of motor 1 and 2. This is a modulo 2^15 value.
      */
-    void getWheelResponse(float response[2]);
+    void getWheelResponse(double response[2]);
 
     /**
      * Set proportional factor of PID controller
      * @param[in] kp proportional factor
      * @return success
      */
-    bool setKp(float kp);
+    bool setKp(double kp);
 
     /**
      * Accessor to proportional factor of PID controller
      * @return proportional factor
      */
-    float getKp();
+    double getKp();
 
     /**
      * Set integration factor of PID controller
      * @param[in] ki integration factor
      * @return success
      */
-    bool setKi(float ki);
+    bool setKi(double ki);
 
     /**
      * Accessor to integration factor of PID controller
      * @return integration factor
      */
-    float getKi();
+    double getKi();
 
     /**
      * Set differential factor of PID controller
      * @param[in] kd differential factor
      * @return success
      */
-    bool setKd(float kd);
+    bool setKd(double kd);
 
     /**
      * Accessor to differential factor of PID controller
      * @return differential factor
      */
-    float getKd();
+    double getKd();
 
     /**
      * Activate/Deactivate anti windup functionality of PID controller
@@ -379,13 +379,13 @@ namespace edu
      * Set weight of input filter. Input values f are filtered with f'=weight*f'+(1-weight)*f.
      * @param[in] filtering weight. A value of 0 disables the filter. The value must be in the range of [0;1[
      */
-    bool setInputWeight(float weight);
+    bool setInputWeight(double weight);
 
     /**
      * Accessor to weight of input filter. See comments of mutator for more information.
      * @return weight of input filter
      */
-    float getInputWeight();
+    double getInputWeight();
 
     /**
      * Accessor to firmware version on the motorcontroller.
@@ -433,7 +433,7 @@ namespace edu
 
     bool _isInit;
 
-    float _rpm[2];
+    double _rpm[2];
 
     short _pos[2];
 

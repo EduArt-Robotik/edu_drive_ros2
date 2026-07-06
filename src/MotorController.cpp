@@ -117,14 +117,14 @@ void MotorController::init()
     retval = false;
   }
   
-  float gearRatios[] = {_params.motorParams[0].gearRatio, _params.motorParams[1].gearRatio};
+  double gearRatios[] = {_params.motorParams[0].gearRatio, _params.motorParams[1].gearRatio};
   if(!setGearRatio(gearRatios))
   {
     RCLCPP_ERROR_STREAM(rclcpp::get_logger("MotorController"), "#MotorController Setting gear ratio failed for device " << _params.canID << std::endl);
     retval = false;
   }
   
-  float ticksPerRev[] = {_params.motorParams[0].encoderRatio, _params.motorParams[1].encoderRatio};
+  double ticksPerRev[] = {_params.motorParams[0].encoderRatio, _params.motorParams[1].encoderRatio};
   if(!setEncoderTicksPerRev(ticksPerRev))
   {
     RCLCPP_ERROR_STREAM(rclcpp::get_logger("MotorController"), "#MotorController Setting encoder parameters failed for device " << _params.canID << std::endl);
@@ -268,10 +268,10 @@ unsigned short MotorController::getTimeout()
   return _params.timeout;
 }
 
-bool MotorController::setGearRatio(float gearRatio[2])
+bool MotorController::setGearRatio(double gearRatio[2])
 {
-  bool retval  = sendFloat(CMD_MOTOR_GEARRATIO, gearRatio[0], 0);
-  retval      &= sendFloat(CMD_MOTOR_GEARRATIO, gearRatio[1], 1);
+  bool retval  = sendFloat(CMD_MOTOR_GEARRATIO, static_cast<float>(gearRatio[0]), 0);
+  retval      &= sendFloat(CMD_MOTOR_GEARRATIO, static_cast<float>(gearRatio[1]), 1);
 
   if(retval){
     _params.motorParams[0].gearRatio = gearRatio[0];
@@ -280,15 +280,15 @@ bool MotorController::setGearRatio(float gearRatio[2])
   return retval;
 }
 
-float MotorController::getGearRatio(size_t motor_num)
+double MotorController::getGearRatio(size_t motor_num)
 {
   return _params.motorParams[motor_num].gearRatio;
 }
 
-bool MotorController::setEncoderTicksPerRev(float encoderTicksPerRev[2])
+bool MotorController::setEncoderTicksPerRev(double encoderTicksPerRev[2])
 {
-  bool retval  = sendFloat(CMD_MOTOR_TICKSPERREV, encoderTicksPerRev[0], 0);
-  retval      &= sendFloat(CMD_MOTOR_TICKSPERREV, encoderTicksPerRev[1], 1);
+  bool retval  = sendFloat(CMD_MOTOR_TICKSPERREV, static_cast<float>(encoderTicksPerRev[0]), 0);
+  retval      &= sendFloat(CMD_MOTOR_TICKSPERREV, static_cast<float>(encoderTicksPerRev[1]), 1);
   if(retval){
     _params.motorParams[0].encoderRatio = encoderTicksPerRev[0];
     _params.motorParams[1].encoderRatio = encoderTicksPerRev[1];
@@ -352,12 +352,12 @@ bool MotorController::setPWM(int pwm[2])
   return _can->send(&_cf);
 }
 
-bool MotorController::setRPM(float rpm[2])
+bool MotorController::setRPM(double rpm[2])
 {
   _cf.can_dlc = 5;
 
-  int vel1 = (int)(rpm[0]*100.f);
-  int vel2 = (int)(rpm[1]*100.f);
+  int vel1 = (int)(rpm[0]*100.0);
+  int vel2 = (int)(rpm[1]*100.0);
 
   _cf.data[0] = CMD_MOTOR_SETRPM;
   _cf.data[1] = (char)(vel1 >> 8) & 0xFF;
@@ -368,7 +368,7 @@ bool MotorController::setRPM(float rpm[2])
   return _can->send(&_cf);
 }
 
-void MotorController::getWheelResponse(float response[2])
+void MotorController::getWheelResponse(double response[2])
 {
   if(_params.responseMode == CAN_RESPONSE_RPM)
   {
@@ -382,41 +382,41 @@ void MotorController::getWheelResponse(float response[2])
   }
 }
 
-bool MotorController::setKp(float kp)
+bool MotorController::setKp(double kp)
 {
-  bool retval = sendFloat(CMD_MOTOR_CTL_KP, kp);
+  bool retval = sendFloat(CMD_MOTOR_CTL_KP, static_cast<float>(kp));
   if(retval)
     _params.kp = kp;
   return retval;
 }
 
-float MotorController::getKp()
+double MotorController::getKp()
 {
   return _params.kp;
 }
 
-bool MotorController::setKi(float ki)
+bool MotorController::setKi(double ki)
 {
-  bool retval = sendFloat(CMD_MOTOR_CTL_KI, ki);
+  bool retval = sendFloat(CMD_MOTOR_CTL_KI, static_cast<float>(ki));
   if(retval)
     _params.ki = ki;
   return retval;
 }
 
-float MotorController::getKi()
+double MotorController::getKi()
 {
   return _params.ki;
 }
 
-bool MotorController::setKd(float kd)
+bool MotorController::setKd(double kd)
 {
-  bool retval = sendFloat(CMD_MOTOR_CTL_KD, kd);
+  bool retval = sendFloat(CMD_MOTOR_CTL_KD, static_cast<float>(kd));
   if(retval)
     _params.kd = kd;
   return retval;
 }
 
-float MotorController::getKd()
+double MotorController::getKd()
 {
   return _params.kd;
 }
@@ -438,15 +438,15 @@ bool MotorController::getAntiWindup()
   return _params.antiWindup;
 }
 
-bool MotorController::setInputWeight(float weight)
+bool MotorController::setInputWeight(double weight)
 {
-  bool retval = sendFloat(CMD_MOTOR_CTL_INPUTFILTER, weight);
+  bool retval = sendFloat(CMD_MOTOR_CTL_INPUTFILTER, static_cast<float>(weight));
   if(retval)
     _params.inputWeight = weight;
   return retval;
 }
 
-float MotorController::getInputWeight()
+double MotorController::getInputWeight()
 {
   return _params.inputWeight;
 }
@@ -483,8 +483,8 @@ void MotorController::notify(struct can_frame* frame)
     
       short val1 = (frame->data[1] << 8 | (frame->data[2]));
       short val2 = (frame->data[3] << 8 | (frame->data[4]));
-      _rpm[0] = ((float)val1) / 100.f;
-      _rpm[1] = ((float)val2) / 100.f;
+      _rpm[0] = static_cast<double>(val1) / 100.0;
+      _rpm[1] = static_cast<double>(val2) / 100.0;
       _pos[0] = 0.f;
       _pos[1] = 0.f;
     }

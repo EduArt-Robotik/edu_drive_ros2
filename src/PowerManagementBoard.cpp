@@ -13,8 +13,8 @@ PowerManagementBoard::PowerManagementBoard(SocketCAN* can, bool verbosity)
   _verbosity = verbosity;
   _can       = can;
   
-  _voltage = 0.f;
-  _current = 0.f;
+  _voltage = 0.0;
+  _current = 0.0;
 
   makeCanStdID(SYSID_PWRMGMT, NODEID_PWRMGMT, &_inputAddress, &_outputAddress, &_broadcastAddress);
   _cf.can_id = _inputAddress;
@@ -52,12 +52,12 @@ bool PowerManagementBoard::disable()
   return _can->send(&_cf);
 }
 
-float PowerManagementBoard::getVoltage()
+double PowerManagementBoard::getVoltage()
 {
   return _voltage;
 }
 
-float PowerManagementBoard::getCurrent()
+double PowerManagementBoard::getCurrent()
 {
   return _current;
 }
@@ -70,14 +70,17 @@ void PowerManagementBoard::notify(struct can_frame* frame)
     unsigned char reversedBytes[4] = {frame->data[4], frame->data[3], frame->data[2], frame->data[1]};
     if(frame->data[0] == 1)
     {
-        // deserialize 4 bytes to a float
-        
-        std::memcpy(&_current, &reversedBytes, sizeof(_current));
+        // deserialize 4 bytes to a float, then widen to double
+        float tmp;
+        std::memcpy(&tmp, &reversedBytes, sizeof(tmp));
+        _current = static_cast<double>(tmp);
     }
     else if(frame->data[0] == 2)
     {
-        // deserialize 4 bytes to a float
-        std::memcpy(&_voltage, &reversedBytes, sizeof(_voltage));
+        // deserialize 4 bytes to a float, then widen to double
+        float tmp;
+        std::memcpy(&tmp, &reversedBytes, sizeof(tmp));
+        _voltage = static_cast<double>(tmp);
     }
     
     if(_verbosity)

@@ -81,8 +81,8 @@ public:
 
 private:
 
-    static constexpr float RADS2RPM = 60.0f / (2.0f * M_PI);
-    static constexpr float RPM2RADS = (2.0f * M_PI) / 60.0f;
+    static constexpr double RADS2RPM = 60.0 / (2.0 * M_PI);
+    static constexpr double RPM2RADS = (2.0 * M_PI) / 60.0;
 
     void hardwareWorker();
 
@@ -92,7 +92,7 @@ private:
 
     int gpio_read(const char *dev_name, int offset, int &value);
 
-    void controlMotors(float vFwd, float vLeft, float omega);
+    void controlMotors(double vFwd, double vLeft, double omega);
 
     bool enableCallback(const std::shared_ptr<rmw_request_id_t> header, const std::shared_ptr<std_srvs::srv::SetBool_Request> request, const std::shared_ptr<std_srvs::srv::SetBool_Response> response);
 

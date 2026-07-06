@@ -52,7 +52,8 @@ void EduDrive::initDrive(std::vector<ControllerParams> cp, std::shared_ptr<Socke
     _extension = std::make_unique<RPiExtensionBoard>(can.get(), verbosity);
     _pwr_mgmt  = std::make_unique<PowerManagementBoard>(can.get(), verbosity);
 
-    _vMax = 0.f;
+    _vMax = 0.0;
+    _omegaMax = 0.0;
 
     bool isKinematicsValid = true;
     for (unsigned int i = 0; i < cp.size(); ++i)
@@ -82,15 +83,15 @@ void EduDrive::initDrive(std::vector<ControllerParams> cp, std::shared_ptr<Socke
             kinematicModel.push_back(kinematics);
             double kx = kinematics[0];
             double kw = kinematics[2];
-            float rpmMax = std::min(cp[i].motorParams[0].rpmMax, cp[i].motorParams[1].rpmMax); // the slowest motor determines the maximum speed of the system
+            double rpmMax = std::min(cp[i].motorParams[0].rpmMax, cp[i].motorParams[1].rpmMax); // the slowest motor determines the maximum speed of the system
             if(fabs(kx)>1e-3)
             {
-                float vMax = fabs(rpmMax * RPM2RADS / kx);
+                double vMax = fabs(rpmMax * RPM2RADS / kx);
                 if(vMax > _vMax) _vMax = vMax;
             }
             if(fabs(kw)>1e-3)
             {
-                float omegaMax = fabs(rpmMax * RPM2RADS / kw);
+                double omegaMax = fabs(rpmMax * RPM2RADS / kw);
                 if(omegaMax > _omegaMax) _omegaMax = omegaMax;
                 }
         }
@@ -156,10 +157,10 @@ void EduDrive::disable()
 void EduDrive::joyCallback(const sensor_msgs::msg::Joy::SharedPtr joy)
 {
     // Assignment of joystick axes to motor commands
-    float fwd      = joy->axes[1];               // Range of values [-1:1]
-    float left     = joy->axes[0];               // Range of values [-1:1]
-    float turn     = joy->axes[2];               // Range of values [-1:1]
-    float throttle = (joy->axes[3] + 1.0) / 2.0; // Range of values  [0:1]
+    double fwd      = joy->axes[1];                // Range of values [-1:1]
+    double left     = joy->axes[0];                // Range of values [-1:1]
+    double turn     = joy->axes[2];                // Range of values [-1:1]
+    double throttle = (joy->axes[3] + 1.0) / 2.0; // Range of values  [0:1]
 
     // Enable movement in the direction of the y-axis only when the button 12 is pressed
     if (!joy->buttons[11])
@@ -217,9 +218,9 @@ void EduDrive::joyCallback(const sensor_msgs::msg::Joy::SharedPtr joy)
     btn9Prev    = joy->buttons[9];
     btn10Prev   = joy->buttons[10];
 
-    float vFwd  = throttle * fwd  * _vMax;
-    float vLeft = throttle * left * _vMax;
-    float omega = throttle * turn * _omegaMax;
+    double vFwd  = throttle * fwd  * _vMax;
+    double vLeft = throttle * left * _vMax;
+    double omega = throttle * turn * _omegaMax;
 
     controlMotors(vFwd, vLeft, omega);
 }
@@ -248,14 +249,14 @@ bool EduDrive::enableCallback(const std::shared_ptr<rmw_request_id_t> header, co
     return true;
 }
 
-void EduDrive::controlMotors(float vFwd, float vLeft, float omega)
+void EduDrive::controlMotors(double vFwd, double vLeft, double omega)
 {
     if (_mc.empty()) return;
 
     _lastCmd = this->get_clock()->now();
 
-    std::vector<std::array<float, 2>> motors(_mc.size());
-    float scale = 1.0f;
+    std::vector<std::array<double, 2>> motors(_mc.size());
+    double scale = 1.0;
 
     // scale velocities relative to the slowest motor of the system
     for (unsigned int i = 0; i < _mc.size(); ++i)
@@ -265,11 +266,11 @@ void EduDrive::controlMotors(float vFwd, float vLeft, float omega)
         const auto& kin0 = _mc[i]->getMotorParams()[0].kinematics;
         const auto& kin1 = _mc[i]->getMotorParams()[1].kinematics;
 
-        motors[i][0] = static_cast<float>(kin0[0] * vFwd + kin0[1] * vLeft + kin0[2] * omega);
-        motors[i][1] = static_cast<float>(kin1[0] * vFwd + kin1[1] * vLeft + kin1[2] * omega);
+        motors[i][0] = kin0[0] * vFwd + kin0[1] * vLeft + kin0[2] * omega;
+        motors[i][1] = kin1[0] * vFwd + kin1[1] * vLeft + kin1[2] * omega;
 
-        const float rpmMaxRad0 = rpmMax0 * RPM2RADS;
-        const float rpmMaxRad1 = rpmMax1 * RPM2RADS;
+        const double rpmMaxRad0 = rpmMax0 * RPM2RADS;
+        const double rpmMaxRad1 = rpmMax1 * RPM2RADS;
 
         if (std::abs(motors[i][0]) > rpmMaxRad0) {
             scale = std::min(scale, rpmMaxRad0 / std::abs(motors[i][0]));
@@ -282,7 +283,7 @@ void EduDrive::controlMotors(float vFwd, float vLeft, float omega)
     // apply scale factor to all motors
     for (unsigned int i = 0; i < _mc.size(); ++i)
     {
-        float w[2] = {
+        double w[2] = {
             motors[i][0] * scale * RADS2RPM,
             motors[i][1] * scale * RADS2RPM
         };
@@ -295,27 +296,29 @@ void EduDrive::controlMotors(float vFwd, float vLeft, float omega)
 
 void EduDrive::hardwareWorker()
 {
-    float voltageAdapter = _adapter->getVoltageSys();
-    float voltagePwrMgmt = _pwr_mgmt->getVoltage();
+    const double voltageAdapter = _adapter->getVoltageSys();
+    const double voltagePwrMgmt = _pwr_mgmt->getVoltage();
     
     std_msgs::msg::Float32MultiArray msgRPM;
     std_msgs::msg::ByteMultiArray msgEnabled;
     geometry_msgs::msg::TransformStamped msgTransform;
+    edu::Vec rpmForOdometry;
+    rpmForOdometry.reserve(_mc.size() * 2);
 
     bool controllersInitialized = true;
     for (auto& mc : _mc)
-    {        
+    {
         controllersInitialized = controllersInitialized && mc->isInitialized();
-}
-    
+    }
+
     for (auto& mc : _mc)
     {
-        float response[2] = {0, 0};
+        double response[2] = {0.0, 0.0};
         bool enableState = false;
         if(controllersInitialized)
         {
             if(voltageAdapter > 3.0 || voltagePwrMgmt > 3.0) //@ToDo: find nicer solution
-            {                    
+            {
                 if(mc->checkConnectionStatus(200))
                 {
                     mc->getWheelResponse(response);
@@ -323,22 +326,24 @@ void EduDrive::hardwareWorker()
                 }
                 else
                 {
-                    RCLCPP_WARN_STREAM(this->get_logger(), "#EduDrive Error synchronizing with device" << mc->getCanId());   
+                    RCLCPP_WARN_STREAM(this->get_logger(), "#EduDrive Error synchronizing with device" << mc->getCanId());
                 }
             }
             else
             {
                 RCLCPP_WARN_STREAM(this->get_logger(), "#EduDrive Low voltage on drive power supply rail for device " << mc->getCanId());
-                
+
                 mc->deinit();
                 disable();
             }
         }
-        msgRPM.data.push_back(response[0]);
-        msgRPM.data.push_back(response[1]);
+        msgRPM.data.push_back(static_cast<float>(response[0]));
+        msgRPM.data.push_back(static_cast<float>(response[1]));
+        rpmForOdometry.push_back(response[0]);
+        rpmForOdometry.push_back(response[1]);
         msgEnabled.data.push_back(enableState);
     }
-    
+
     rclcpp::Time stampReceived = this->get_clock()->now();
 
     _enabled = false;
@@ -352,7 +357,7 @@ void EduDrive::hardwareWorker()
         _extension->sendEnabledState(_enabled);
     }
 
-    _odometry->update(static_cast<std::uint64_t>(stampReceived.nanoseconds()), edu::Vec(msgRPM.data.begin(), msgRPM.data.end()));
+    _odometry->update(static_cast<std::uint64_t>(stampReceived.nanoseconds()), rpmForOdometry);
     
     Pose pose = _odometry->get_pose();
     msgTransform.header.stamp = stampReceived;
@@ -374,11 +379,11 @@ void EduDrive::hardwareWorker()
     _pubEnabled->publish(msgEnabled);
 
     std_msgs::msg::Float32 msgTemperature;
-    msgTemperature.data = _adapter->getTemperature();
+    msgTemperature.data = static_cast<float>(_adapter->getTemperature());
     _pubTemp->publish(msgTemperature);
 
     std_msgs::msg::Float32 msgVoltageAdapter;
-    msgVoltageAdapter.data = _adapter->getVoltageSys();
+    msgVoltageAdapter.data = static_cast<float>(_adapter->getVoltageSys());
     _pubVoltageAdapter->publish(msgVoltageAdapter);
 
     double q[4], a[3], v[3];
@@ -401,11 +406,11 @@ void EduDrive::hardwareWorker()
     _pubImu->publish(msgImu);
 
     std_msgs::msg::Float32 msgVoltagePwrMgmt;
-    msgVoltagePwrMgmt.data = voltagePwrMgmt;
+    msgVoltagePwrMgmt.data = static_cast<float>(voltagePwrMgmt);
     _pubVoltagePwrMgmt->publish(msgVoltagePwrMgmt);
 
     std_msgs::msg::Float32 msgCurrentPwrMgmt;
-    msgCurrentPwrMgmt.data = _pwr_mgmt->getCurrent();
+    msgCurrentPwrMgmt.data = static_cast<float>(_pwr_mgmt->getCurrent());
     _pubCurrentPwrMgmt->publish(msgCurrentPwrMgmt);
 }
 

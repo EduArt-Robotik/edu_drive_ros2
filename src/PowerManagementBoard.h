@@ -43,13 +43,13 @@ public:
    * @brief Get voltage of main power rail
    * @return voltage [V]
    */
-  float getVoltage();
+  double getVoltage();
   
   /**
    * @brief Get current consumed by robot
    * @return current [A]
    */
-  float getCurrent();
+  double getCurrent();
 
 private:
 
@@ -65,9 +65,9 @@ private:
 
     int32_t          _broadcastAddress; // Broadcast address for the distribution of CAN data to multiple nodes
 
-    float            _voltage;          // Voltage of main power rail
+    double           _voltage;          // Voltage of main power rail
 
-    float            _current;          // Current consumed by Robot
+    double           _current;          // Current consumed by Robot
     
     bool             _verbosity;        // Set this flag to true via the Constructor to get information via cout
     

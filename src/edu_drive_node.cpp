@@ -14,7 +14,7 @@ int main(int argc, char *argv[])
    edu_drive->declare_parameter("usingPowerManagementBoard", true);
    edu_drive->declare_parameter("canInterface",              std::string("can0"));
    edu_drive->declare_parameter("frequencyScale",            32);
-   edu_drive->declare_parameter("inputWeight",               0.8f);
+   edu_drive->declare_parameter("inputWeight",               0.8);
    edu_drive->declare_parameter("maxPulseWidth",             50);
    edu_drive->declare_parameter("timeout",                   300);
    edu_drive->declare_parameter("verbosity",                 false);
@@ -35,9 +35,9 @@ int main(int argc, char *argv[])
       timeout = 300;
    }
 
-   edu_drive->declare_parameter("kp", 0.0f);
-   edu_drive->declare_parameter("ki", 0.f);
-   edu_drive->declare_parameter("kd", 0.f);
+   edu_drive->declare_parameter("kp", 0.0);
+   edu_drive->declare_parameter("ki", 0.0);
+   edu_drive->declare_parameter("kd", 0.0);
    edu_drive->declare_parameter("antiWindup", 1);
    edu_drive->declare_parameter("responseMode", 0);
 
@@ -78,9 +78,9 @@ int main(int argc, char *argv[])
          std::string driveID = controllerID + std::string(".drive") + std::to_string(d);
          edu_drive->declare_parameter(driveID + std::string(".channel"), 0);
          edu_drive->declare_parameter(driveID + std::string(".kinematics"), std::vector<double>{0.0,0.0,0.0});
-         edu_drive->declare_parameter(driveID + std::string(".gearRatio"), 0.f);
-         edu_drive->declare_parameter(driveID + std::string(".encoderRatio"), 0.f);
-         edu_drive->declare_parameter(driveID + std::string(".rpmMax"), 0.f);
+         edu_drive->declare_parameter(driveID + std::string(".gearRatio"), 0.0);
+         edu_drive->declare_parameter(driveID + std::string(".encoderRatio"), 0.0);
+         edu_drive->declare_parameter(driveID + std::string(".rpmMax"), 0.0);
          edu_drive->declare_parameter(driveID + std::string(".invertEnc"), 0);
 
          cp.motorParams[d].channel        = edu_drive->get_parameter(driveID + std::string(".channel")).as_int();
