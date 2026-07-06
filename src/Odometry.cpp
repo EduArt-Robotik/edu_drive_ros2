@@ -165,7 +165,7 @@ int Odometry::propagate_position(edu::Vec twistVec)
     // Calculate movement in world coordinate system
     double dx_world = 0;
     double dy_world = 0;
-    if(dtheta < _straight_line_threshold){
+    if(std::abs(dtheta) < _straight_line_threshold){
         // Straight line move
         dx_world = ds * cos(alpha);
         dy_world = ds * sin(alpha);
