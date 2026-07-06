@@ -1,6 +1,7 @@
 #include "JoystickInputHandler.h"
 
 #include <iostream>
+#include <rclcpp/rclcpp.hpp>
 
 namespace edu {
 
@@ -59,6 +60,7 @@ JoystickInputHandler::process(const sensor_msgs::msg::Joy::SharedPtr &joy, doubl
       _omniModeEnabled = omniPressed;
     } else if (omniPressed && !_joyOmniPrev) {
       _omniModeEnabled = !_omniModeEnabled;
+        RCLCPP_INFO_STREAM(rclcpp::get_logger("edu_drive_ros2_node"), (_omniModeEnabled ? "Enabling" : "Disabling") << " omni mode");
     }
 
     _joyOmniPrev = omniPressed;
