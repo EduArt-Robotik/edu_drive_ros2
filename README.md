@@ -12,15 +12,17 @@ All three can be used in dependency of the mounted wheels and the configuration 
 - [Launching the Robot](#launching-the-robot)
 - [YAML file parameters](#yaml-file-parameters)
 - [Calculation of the kinematic parameters](#calculation-of-the-kinematic-parameters)
-- [Setting up a Raspberry PI from scratch](#setting-up-a-raspberry-pi-from-scratch)
+- [Setting up a Raspberry Pi from scratch](#setting-up-a-raspberry-pi-from-scratch)
 - [Free Kinematics Kit](#free-kinematics-kit)
   - [Electrical Interface](#electrical-interface)
   - [Software Interface](#software-interface)
   - [What do I need to build my own EduArt robot?](#what-do-i-need-to-build-my-own-eduart-robot)
+  - [Make your robot wireless](#make-your-robot-wireless)
 - [Troubleshooting](#troubleshooting)
   - [🚫 The robot does not drive](#-the-robot-does-not-drive)
   - [🚫 Wheels rotate at full speed and don't respond to velocity commands](#-wheels-rotate-at-full-speed-and-dont-respond-to-velocity-commands)
   - [🚫 Wheels rotate in the wrong direction](#-wheels-rotate-in-the-wrong-direction)
+  - [🚫 The enable signal is sometimes reset for no reason](#-the-enable-signal-is-sometimes-reset-for-no-reason)
 
 ## Launching the Robot
 In order to run the robot, you need to launch the appropriate launch file.
@@ -63,6 +65,7 @@ Please notice also, that the ROS variable ROS_DOMAIN_ID should be set properly.
 | rpmMax         | Maximum revolutions per minute of geared motor pinion |
 | channel        | Used channel of motor controller. There are single-channel motorshields and dual-channel motorshields. Meaningful values are 0 or 1. |
 | kinematics     | Three-dimensional vector describing the conversion from Twist messages in motor revolutions. See explanation below. |
+| joy.config.omniModeLatching | Set to `true` if the omni-mode button toggles on press, or `false` if it is active only while held |
 
 ## Calculation of the kinematic parameters
 The kinematic concept uses a conversion matrix for the conversion of twist parameters and wheel speeds.
@@ -85,7 +88,7 @@ Depending on the polarity of the motor wiring, the kinematic parameters may have
 ### Example for a Mecanum drive
 <img src="https://latex.codecogs.com/svg.image?\mathbf{T}&space;=&space;\frac{1}{r}\begin{pmatrix}&space;&space;1&space;&&space;-1&space;&&space;-\frac{l_x&plus;l_y}{2}\\&space;-1&space;&&space;-1&space;&&space;-\frac{l_x&plus;l_y}{2}\\&space;&space;1&space;&&space;&space;1&space;&&space;-\frac{l_x&plus;l_y}{2}\\&space;-1&space;&&space;&space;1&space;&&space;-\frac{l_x&plus;l_y}{2}\end{pmatrix}" title="https://latex.codecogs.com/svg.image?\mathbf{T} = \frac{1}{r}\begin{pmatrix} 1 & -1 & -\frac{l_x+l_y}{2}\\ -1 & -1 & -\frac{l_x+l_y}{2}\\ 1 & 1 & -\frac{l_x+l_y}{2}\\ -1 & 1 & -\frac{l_x+l_y}{2}\end{pmatrix}" />
 
-> **Concrete parameter example:** for Faulhaber motors, series 2224U018SR, gear ratio: 44:1, wheel diameter 100mm ($r=0.05m$), robot length $lx=0.25m$, robot width $l_y=0.35m$
+> **Concrete parameter example:** for Faulhaber motors, series 2224U018SR, gear ratio: 44:1, wheel diameter 100mm ($r=0.05m$), robot length $l_x=0.25m$, robot width $l_y=0.35m$
 
 $k_{x,n} = \pm\frac{1}{r} = \pm 20$
 
@@ -93,7 +96,7 @@ $k_{y,n} = \pm\frac{1}{r} = \pm 20$ (mecanum wheels) or  $k_{y,n} = 0$ (skid ste
 
 $k_{w,n} = \pm\frac{1}{r} \cdot \frac{l_x+l_y}{2} = \pm 6$ (mecanum wheels) or $k_{w,n} = \pm\frac{l_y}{2 \cdot r} = \pm 3.5$ (skid steering)
 
-# Setting up a Raspberry PI from scratch
+## Setting up a Raspberry Pi from scratch
 ### 1. Choose between Raspberry Pi OS or Ubuntu
 Which version of the operating system you use determines which ROS version can be installed later.
 We also recommend using the Ubuntu Server Edition.
@@ -218,7 +221,7 @@ echo "source /opt/ros/jazzy/setup.bash" >> ~/.bashrc
 ```
 
 ### 10.  Optional: Static IP address
-#### Ubuntu 22.04. server edition
+#### Ubuntu 22.04 server edition
 By default, the configuration of the Ubuntu 22.04. server edition is set to DHCP.
 If you would like to set a static IP address, you can do this by making the following adjustment:
 ```bash
@@ -410,7 +413,6 @@ Below is an example of how the implementation might look.
   
   bool YOURCLASS::send()
   {
-    canid_t idTmp = _cf.can_id;
     can_frame cf;
     cf.can_id = YOUR_DEVICE_INPUT_ID;
     cf.can_dlc = LENGTH_OF_YOUR_MSG;
@@ -430,7 +432,7 @@ The following parts list gives you an overview of what you need if you want to b
 * Toggle Switch
 * On button (normally open contact)
 * Charging socket (2.1 mm diameter)
-* Raspberry Pi5 (if you use the RPi5 adapter board, otherwise (Ethernet controller) any computer with Ethernet interface)
+* Raspberry Pi 5 (if you use the RPi5 adapter board, otherwise (Ethernet controller) any computer with Ethernet interface)
 * DC-Motors (18V or 24V) with Encoders (recommended is a minimum of 64 CPR)
 * 30V Power supply unit with min. 2.0A current (also available from EduArt)
 
@@ -444,7 +446,7 @@ You are free to choose the mechanical design of your robot.
 ### Make your robot wireless
 If the robot is not to be operated exclusively autonomously, a robust wireless connection is necessary. Although the Raspberry also offers an integrated WLAN module, it is not nearly as powerful as two coupled routers. For example, we have had good experiences with two routers from GL.iNet. The AX-1800 setup for the operator station and AXT-1800 as a mobile router on the robot demonstrated robust characteristics. The AX-1800 is configured as router and the AXT-1800 in extension mode. Make sure that both routers are configured with the same country setting. Our routers had two different active country codes. The routers used should also have the option of limiting themselves to specific channels. In competitive situations, each team is often assigned a specific channel.
 
-### Troubleshooting
+## Troubleshooting
 
 #### 🚫 The robot does not drive
 > **Error:**
