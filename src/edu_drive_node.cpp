@@ -95,7 +95,7 @@ int main(int argc, char *argv[])
       edu_drive->declare_parameter(controllerID + std::string(".canID"), 0);
 
       cp.canID          = edu_drive->get_parameter(controllerID + std::string(".canID")).as_int();
-      cp.responseMode   = (responseMode==0 ? edu::CAN_RESPONSE_RPM : edu::CAN_RESPONSE_POS);
+      cp.responseMode   = (responseMode==0 ? edu::CanResponseMode::Rpm : edu::CanResponseMode::Pos);
 
       // --- Motor parameters ---------
       for(int d=0; d<2; d++)

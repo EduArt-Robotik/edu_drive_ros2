@@ -34,10 +34,10 @@ namespace edu
     }
   };
 
-  enum CanResponse
+  enum class CanResponseMode : unsigned int
   {
-    CAN_RESPONSE_RPM = 0,
-    CAN_RESPONSE_POS = 1
+    Rpm = 0,
+    Pos = 1
   };
 
   struct MotorParams
@@ -48,7 +48,7 @@ namespace edu
     // Kinematic vector
     std::vector<double> kinematics;
 
-    enum CanResponse responseMode;
+    CanResponseMode responseMode;
     
     int invertEnc;
     double gearRatio;
@@ -63,7 +63,7 @@ namespace edu
       encoderRatio  = 0.0;
       rpmMax        = 0.0;
       kinematics.clear();
-      responseMode = CAN_RESPONSE_RPM;
+      responseMode = CanResponseMode::Rpm;
     }
 
     /**
@@ -97,7 +97,7 @@ namespace edu
     double kd;
     int antiWindup;
 
-    CanResponse responseMode;
+    CanResponseMode responseMode;
     std::vector<MotorParams> motorParams;
 
     /**
@@ -114,7 +114,7 @@ namespace edu
       ki = 0.0;
       kd = 0.0;
       antiWindup = 1;
-      responseMode = CAN_RESPONSE_RPM;
+      responseMode = CanResponseMode::Rpm;
 
       motorParams.resize(2);
       std::vector<double> zeroKinematic{0.0, 0.0, 0.0};
@@ -217,7 +217,7 @@ namespace edu
      * @param[in] mode response mode
      * @return successful transmission of configure command
      */
-    bool configureResponse(enum CanResponse mode);
+    bool configureResponse(enum CanResponseMode mode);
 
     /**
      * Invert encoder polarity

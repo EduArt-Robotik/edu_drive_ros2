@@ -65,12 +65,12 @@ int Odometry::update(edu::Vec mot_pos_vec)
 
     int status = 1;
 
-    if((_odometry_mode == ODOMETRY_RELATIVE_MODE) || (_is_pos_init)){
+    if((_odometry_mode == edu::OdometryMode::Relative) || (_is_pos_init)){
         
         edu::Vec vOmega = mot_pos_vec;
 
         // In case absolute values are given, calculate the difference to previous position.
-        if(_odometry_mode == ODOMETRY_ABSOLUTE_MODE){
+        if(_odometry_mode == edu::OdometryMode::Absolute){
             for(int i = 0; i < size; i++){
                 vOmega.at(i) -= _prev_pos_vec.at(i);
             }
@@ -108,7 +108,7 @@ int Odometry::update(uint64_t time_ns, edu::Vec mot_vel_vec)
 
     int status = 1;
 
-    if((_odometry_mode == ODOMETRY_RELATIVE_MODE) || (_is_vel_init)){
+    if((_odometry_mode == edu::OdometryMode::Relative) || (_is_vel_init)){
 
         // In case absolute values are given, calculate the difference to previous time.
         double dt_s = (_odometry_mode == ODOMETRY_ABSOLUTE_MODE)
@@ -119,7 +119,7 @@ int Odometry::update(uint64_t time_ns, edu::Vec mot_vel_vec)
         // Convert rpm to rad per sec
         edu::Vec vOmega = mot_vel_vec;
         
-        double factor = dt_s * rpm_to_rad_per_sec_factor;
+        const double factor = dt_s * RPM_2_RAD_PER_SEC;
         for(auto& v : vOmega){
             v *= factor;
         }

@@ -29,7 +29,7 @@ MotorController::MotorController(SocketCAN* can, ControllerParams params, bool v
   std::cout << "ki             = " << params.ki << std::endl;
   std::cout << "kd             = " << params.kd << std::endl;
   std::cout << "antiWindup     = " << params.antiWindup << std::endl;
-  std::cout << "responseMode   = " << params.responseMode << std::endl;
+  std::cout << "responseMode   = " << static_cast<int>(params.responseMode) << std::endl;
 
   std::cout << std::endl << "--- Controller #" << std::hex << params.canID << std::dec << " parameters ---" << std::endl;
 
@@ -232,10 +232,10 @@ const std::vector<MotorParams>& MotorController::getMotorParams()
   return _params.motorParams;
 }
 
-bool MotorController::configureResponse(enum CanResponse mode)
+bool MotorController::configureResponse(CanResponseMode mode)
 {
   _cf.can_dlc = 1;
-  if(mode==CAN_RESPONSE_RPM)
+  if(mode==CanResponseMode::Rpm)
     _cf.data[0] = CMD_MOTOR_SENDRPM;
   else
     _cf.data[0] = CMD_MOTOR_SENDPOS;
@@ -376,7 +376,7 @@ bool MotorController::setRPM(double rpm[2])
 void MotorController::getWheelResponse(double response[2])
 {
   LockGuard guard(_stateMutex);
-  if(_params.responseMode == CAN_RESPONSE_RPM)
+  if(_params.responseMode == CanResponseMode::Rpm)
   {
     response[0] = _rpm[0];
     response[1] = _rpm[1];

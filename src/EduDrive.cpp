@@ -79,7 +79,7 @@ void EduDrive::initDrive(std::vector<ControllerParams> cp, std::shared_ptr<Socke
 
     edu::Matrix K(kinematicModel);
     edu::Matrix Kinv = K.pseudoInverse();
-    _odometry = std::make_unique<Odometry>(ODOMETRY_ABSOLUTE_MODE, Kinv);
+    _odometry = std::make_unique<Odometry>(edu::OdometryMode::Absolute, Kinv);
     _joystickInput = std::make_unique<JoystickInputHandler>(joyMap, _vMax, _omegaMax);
 
     // Publisher of motor shields
@@ -436,7 +436,7 @@ int EduDrive::gpio_write(const char *dev_name, int offset, int value)
     fd = open(dev_name, O_RDONLY);
     if (fd < 0)
     {
-        RCLCPP_WARN_STREAM(this->get_logger(), "Unabled to open " << dev_name << ": " << strerror(errno) << std::endl);
+        RCLCPP_WARN_STREAM(this->get_logger(), "Unable to open " << dev_name << ": " << strerror(errno) << std::endl);
         return -1;
     }
     rq.lineoffsets[0] = offset;
@@ -471,7 +471,7 @@ int EduDrive::gpio_read(const char *dev_name, int offset, int &value)
     fd = open(dev_name, O_RDONLY);
     if (fd < 0)
     {
-            RCLCPP_WARN_STREAM(this->get_logger(), "Unabled to open " << dev_name << ", " << strerror(errno) << std::endl);
+            RCLCPP_WARN_STREAM(this->get_logger(), "Unable to open " << dev_name << ", " << strerror(errno) << std::endl);
         return -1;
     }
     rq.lineoffsets[0] = offset;

@@ -140,8 +140,7 @@ private:
   std::unique_ptr<RPiAdapterBoard> _adapter;       // Adapter board
   std::unique_ptr<RPiExtensionBoard> _extension;   // Extension board
   std::unique_ptr<PowerManagementBoard> _pwr_mgmt; // Power management board
-  std::vector<std::unique_ptr<MotorController>>
-      _mc; // Vector containing pointer to all motor controller instances
+  std::vector<std::unique_ptr<MotorController>> _mc; // Vector containing pointer to all motor controller instances
 
   double _vMax;
   double _omegaMax;
