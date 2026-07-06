@@ -35,16 +35,16 @@ MotorController::MotorController(SocketCAN* can, ControllerParams params, bool v
 
   for(unsigned int i=0; i<2; i++)
   {
-    std::cout << "   --- Drive" << i << std::endl;
-    std::cout << "       channel: " << _params.motorParams[i].channel << std::endl;
-    std::cout << "       kinematics: ";
+    std::cout << "   --- Drive" << i << " ---" << std::endl;
+    std::cout << "         channel: " << _params.motorParams[i].channel << std::endl;
+    std::cout << "         kinematics: ";
     for(unsigned int j=0; j<_params.motorParams[i].kinematics.size(); j++)
       std::cout << _params.motorParams[i].kinematics[j] << " ";
     std::cout << std::endl;
-    std::cout << "       gearRatio      = " << params.motorParams[i].gearRatio << std::endl;
-    std::cout << "       encoderRatio   = " << params.motorParams[i].encoderRatio << std::endl;
-    std::cout << "       rpmMax         = " << params.motorParams[i].rpmMax << std::endl;
-    std::cout << "       invertEnc      = " << params.motorParams[i].invertEnc << std::endl;
+    std::cout << "         gearRatio      = " << params.motorParams[i].gearRatio << std::endl;
+    std::cout << "         encoderRatio   = " << params.motorParams[i].encoderRatio << std::endl;
+    std::cout << "         rpmMax         = " << params.motorParams[i].rpmMax << std::endl;
+    std::cout << "         invertEnc      = " << params.motorParams[i].invertEnc << std::endl;
   }
 
   std::cout << "---------------------------" << std::endl << std::endl;

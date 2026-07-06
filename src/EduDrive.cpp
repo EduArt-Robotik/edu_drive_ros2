@@ -20,13 +20,17 @@ EduDrive::~EduDrive()
    
 }
 
-void EduDrive::initDrive(std::vector<ControllerParams> cp, std::shared_ptr<SocketCAN> can, bool using_pwr_mgmt, bool verbosity)
+void EduDrive::initDrive(std::vector<ControllerParams> cp, std::shared_ptr<SocketCAN> can, const JoystickMap& joyMap, bool using_pwr_mgmt, bool verbosity)
 {
     _can = can;
-
+    _joyMap = joyMap;
     _using_pwr_mgmt = using_pwr_mgmt;
     _verbosity = verbosity;
     _enabled = false;
+    _omniModeEnabled = false;
+    _joyOmniPrev = -1;
+    _joyDisablePrev = -1;
+    _joyEnablePrev = -1;
 
     // CAN devices
     _adapter   = std::make_unique<RPiAdapterBoard>(can.get(), verbosity);
@@ -81,6 +85,27 @@ void EduDrive::initDrive(std::vector<ControllerParams> cp, std::shared_ptr<Socke
     edu::Matrix K(kinematicModel);
     edu::Matrix Kinv = K.pseudoInverse();
     _odometry = std::make_unique<Odometry>(ODOMETRY_ABSOLUTE_MODE, Kinv);
+
+    //if(verbosity)
+    //{
+    std::cout << "---------------------------" << std::endl << std::endl;
+    std::cout << "--- Joystick Mapping ---" << std::endl;
+    std::cout << "   --- Buttons ---" << std::endl;
+    std::cout << "         enable     = " << joyMap.buttons.enable << std::endl;
+    std::cout << "         disable    = " << joyMap.buttons.disable << std::endl;
+    std::cout << "         omniMode   = " << joyMap.buttons.omniMode << std::endl;
+    std::cout << "         servoLeft  = " << joyMap.buttons.servoLeft << std::endl;
+    std::cout << "         servoRight = " << joyMap.buttons.servoRight << std::endl;
+    std::cout << "   --- Axes ---" << std::endl;
+    std::cout << "         forward    = " << joyMap.axes.forward << std::endl;
+    std::cout << "         left       = " << joyMap.axes.left << std::endl;
+    std::cout << "         turn       = " << joyMap.axes.turn << std::endl;
+    std::cout << "         throttle   = " << joyMap.axes.throttle << std::endl;
+    std::cout << "         fineAdjust = " << joyMap.axes.fineAdjust << std::endl;
+    std::cout << "   --- Config ---" << std::endl;
+    std::cout << "         omniModeLatching = " << joyMap.config.omniModeLatching << std::endl;
+    std::cout << "---------------------------" << std::endl << std::endl;
+    //}
 
     // Publisher of motor shields
     _pubEnabled = this->create_publisher<std_msgs::msg::ByteMultiArray>("enabled", 1);
@@ -163,36 +188,60 @@ void EduDrive::joyCallback(const sensor_msgs::msg::Joy::SharedPtr joy)
     {
         return (idx < joy->axes.size()) ? joy->axes[idx] : fallback;
     };
-    auto button = [&](size_t idx) -> int32_t
+    auto button = [&](int idx) -> int32_t
     {
-        return (idx < joy->buttons.size()) ? joy->buttons[idx] : 0;
+        if (idx < 0)
+            return 0;
+
+        const auto buttonIdx = static_cast<size_t>(idx);
+        return (buttonIdx < joy->buttons.size()) ? joy->buttons[buttonIdx] : 0;
     };
 
     // Assignment of joystick axes to motor commands
-    double fwd      = axis(1);              // Range of values [-1:1]
-    double left     = axis(0);              // Range of values [-1:1]
-    double turn     = axis(2);              // Range of values [-1:1]
-    double throttle = (axis(3, -1.0) + 1.0) / 2.0; // Range of values  [0:1]
+    double fwd      = axis(_joyMap.axes.forward);              // Range of values [-1:1]
+    double left     = axis(_joyMap.axes.left);                 // Range of values [-1:1]
+    double turn     = axis(_joyMap.axes.turn);                 // Range of values [-1:1]
+    double throttle = (axis(_joyMap.axes.throttle, -1.0) + 1.0) / 2.0; // Range of values  [0:1]
 
-    // Enable movement in the direction of the y-axis only when the button 12 is pressed
-    if (!button(11))
+    const bool omniPressed = button(_joyMap.buttons.omniMode);
+    if (_joyMap.config.omniModeLatching)
+    {
+        if (_joyOmniPrev < 0)
+        {
+            _omniModeEnabled = omniPressed;
+        }
+        else if (omniPressed && !_joyOmniPrev)
+        {
+            _omniModeEnabled = !_omniModeEnabled;
+            RCLCPP_INFO_STREAM(this->get_logger(), (_omniModeEnabled ? "Enabling" : "Disabling") << " omni mode");
+        }
+
+        _joyOmniPrev = omniPressed;
+    }
+    else
+    {
+        _omniModeEnabled = omniPressed;
+    }
+
+    // Enable movement in the direction of the y-axis only when omni mode is active
+    if (!_omniModeEnabled)
         left = 0;
 
     // Forward / Backward basic orientation
     double servoPos = _servoPos;
-    if(button(2))
+    if(button(_joyMap.buttons.servoLeft))
     {
         _servoPos = 45.0;
     }
-    else if(button(3))
+    else if(button(_joyMap.buttons.servoRight))
     {
         _servoPos = 225.0;
     }
 
     // Coolie hat fine positioning
-    if(axis(4) == 1.0)
+    if(axis(_joyMap.axes.fineAdjust) == 1.0)
         _servoPos += 1.0;
-    if(axis(4) == -1.0)
+    if(axis(_joyMap.axes.fineAdjust) == -1.0)
         _servoPos -= 1.0;
     
     if(_servoPos < 0.0)
@@ -215,20 +264,22 @@ void EduDrive::joyCallback(const sensor_msgs::msg::Joy::SharedPtr joy)
         angles[7] = 275;
         _extension->setServos(angles);
 }
-    static int32_t btn9Prev  = button(9);
-    static int32_t btn10Prev = button(10);
+    if (_joyDisablePrev < 0)
+        _joyDisablePrev = button(_joyMap.buttons.disable);
+    if (_joyEnablePrev < 0)
+        _joyEnablePrev = button(_joyMap.buttons.enable);
 
-    if (button(9) && !btn9Prev)
+    if (button(_joyMap.buttons.disable) && !_joyDisablePrev)
     {
         disable();
     }
-    else if (button(10) && !btn10Prev)
+    else if (button(_joyMap.buttons.enable) && !_joyEnablePrev)
     {
         enable();
     }
 
-    btn9Prev    = button(9);
-    btn10Prev   = button(10);
+    _joyDisablePrev = button(_joyMap.buttons.disable);
+    _joyEnablePrev = button(_joyMap.buttons.enable);
 
     double vFwd  = throttle * fwd  * _vMax;
     double vLeft = throttle * left * _vMax;

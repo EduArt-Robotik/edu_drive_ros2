@@ -27,6 +27,31 @@ int main(int argc, char *argv[])
    auto timeout        = edu_drive->get_parameter("timeout").as_int();
    auto verbosity      = edu_drive->get_parameter("verbosity").as_bool();
 
+   edu_drive->declare_parameter("joy.buttons.enable", 10);
+   edu_drive->declare_parameter("joy.buttons.disable", 9);
+   edu_drive->declare_parameter("joy.buttons.omniMode", 11);
+   edu_drive->declare_parameter("joy.buttons.servoLeft", 2);
+   edu_drive->declare_parameter("joy.buttons.servoRight", 3);
+   edu_drive->declare_parameter("joy.axes.forward", 1);
+   edu_drive->declare_parameter("joy.axes.left", 0);
+   edu_drive->declare_parameter("joy.axes.turn", 2);
+   edu_drive->declare_parameter("joy.axes.throttle", 3);
+   edu_drive->declare_parameter("joy.axes.fineAdjust", 4);
+   edu_drive->declare_parameter("joy.config.omniModeLatching", true);
+
+   edu::JoystickMap joyMap;
+   joyMap.buttons.enable     = edu_drive->get_parameter("joy.buttons.enable").as_int();
+   joyMap.buttons.disable    = edu_drive->get_parameter("joy.buttons.disable").as_int();
+   joyMap.buttons.omniMode   = edu_drive->get_parameter("joy.buttons.omniMode").as_int();
+   joyMap.buttons.servoLeft  = edu_drive->get_parameter("joy.buttons.servoLeft").as_int();
+   joyMap.buttons.servoRight = edu_drive->get_parameter("joy.buttons.servoRight").as_int();
+   joyMap.axes.forward       = edu_drive->get_parameter("joy.axes.forward").as_int();
+   joyMap.axes.left          = edu_drive->get_parameter("joy.axes.left").as_int();
+   joyMap.axes.turn          = edu_drive->get_parameter("joy.axes.turn").as_int();
+   joyMap.axes.throttle      = edu_drive->get_parameter("joy.axes.throttle").as_int();
+   joyMap.axes.fineAdjust    = edu_drive->get_parameter("joy.axes.fineAdjust").as_int();
+   joyMap.config.omniModeLatching = edu_drive->get_parameter("joy.config.omniModeLatching").as_bool();
+   
    // Ensure a proper range for the timeout value
    // A lag more than a second should not be tolerated
    if (timeout < 0 || timeout > 1000)
@@ -102,6 +127,6 @@ int main(int argc, char *argv[])
    }
       
    RCLCPP_INFO_STREAM(edu_drive->get_logger(), "CAN Interface: " << canInterface << " opened");
-   edu_drive->initDrive(controllerParams, can, usingPwrMgmt, verbosity);
+   edu_drive->initDrive(controllerParams, can, joyMap, usingPwrMgmt, verbosity);
    edu_drive->run();
 }
