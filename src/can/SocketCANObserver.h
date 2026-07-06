@@ -2,6 +2,7 @@
 
 #include <linux/can.h>
 #include <chrono>
+#include <atomic>
 
 namespace edu
 {
@@ -61,7 +62,7 @@ private:
 
   canid_t _canid;
 
-  std::chrono::time_point<std::chrono::steady_clock> _last_msg_stamp;
+  std::atomic<std::int64_t> _last_msg_stamp_ns;
 
 };
 
