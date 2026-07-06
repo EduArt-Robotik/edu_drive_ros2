@@ -3,6 +3,7 @@
 #include <fcntl.h>
 #include <sys/ioctl.h>
 #include <linux/gpio.h>
+#include <stdexcept>
 
 #include "tf2/LinearMath/Quaternion.h"
 
@@ -69,7 +70,7 @@ void EduDrive::initDrive(std::vector<ControllerParams> cp, std::shared_ptr<Socke
     if(!isKinematicsValid)
     {
         RCLCPP_INFO_STREAM(this->get_logger(), "#EduDrive Kinematic vectors does not fit to drive concept. Vectors of length 3 are expected.");
-        exit(1);
+        throw std::invalid_argument("Invalid kinematic vectors: expected vectors of length 3.");
     }
     
     std::vector<std::vector<double>> kinematicModel;

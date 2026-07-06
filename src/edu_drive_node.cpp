@@ -4,11 +4,15 @@
 #include <vector>
 #include <string>
 #include <memory>
+#include <exception>
 
 int main(int argc, char *argv[])
 {
    rclcpp::init(argc, argv);
    auto edu_drive = std::make_shared<edu::EduDrive>();
+
+   try
+   {
 
    // --- System parameters --------   
    edu_drive->declare_parameter("usingPowerManagementBoard", true);
@@ -104,4 +108,19 @@ int main(int argc, char *argv[])
    RCLCPP_INFO_STREAM(edu_drive->get_logger(), "CAN Interface: " << canInterface << " opened");
    edu_drive->initDrive(controllerParams, can, usingPwrMgmt, verbosity);
    edu_drive->run();
+   }
+   catch (const std::exception& e)
+   {
+      RCLCPP_ERROR_STREAM(edu_drive->get_logger(), "Fatal error in edu_drive_node: " << e.what());
+      rclcpp::shutdown();
+      return -1;
+   }
+   catch (...)
+   {
+      RCLCPP_ERROR_STREAM(edu_drive->get_logger(), "Fatal unknown error in edu_drive_node");
+      rclcpp::shutdown();
+      return -1;
+   }
+
+   return 0;
 }
