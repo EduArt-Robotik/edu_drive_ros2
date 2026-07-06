@@ -102,6 +102,7 @@ void EduDrive::initDrive(std::vector<ControllerParams> cp, std::shared_ptr<Socke
     _subJoy     = this->create_subscription<sensor_msgs::msg::Joy>("joy", 1, std::bind(&EduDrive::joyCallback, this, std::placeholders::_1));
     _subVel     = this->create_subscription<geometry_msgs::msg::Twist>("vel/teleop", 10, std::bind(&EduDrive::velocityCallback, this, std::placeholders::_1));
     _srvEnable  = this->create_service<std_srvs::srv::SetBool>("enable", std::bind(&EduDrive::enableCallback, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
+    _srvResetOdometry = this->create_service<std_srvs::srv::SetBool>("reset_odometry", std::bind(&EduDrive::resetOdometryCallback, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
     
     RCLCPP_INFO_STREAM(this->get_logger(), "Instantiated robot with vMax: " << _vMax << " m/s and omegaMax: " << _omegaMax << " rad/s");
 }
@@ -225,6 +226,33 @@ bool EduDrive::enableCallback(const std::shared_ptr<rmw_request_id_t> header, co
         disable();
     }
     response->success = true;
+    return true;
+}
+
+bool EduDrive::resetOdometryCallback(const std::shared_ptr<rmw_request_id_t> header, const std::shared_ptr<std_srvs::srv::SetBool_Request> request, const std::shared_ptr<std_srvs::srv::SetBool_Response> response)
+{
+    // suppress warning about unused variable header
+    (void)header;
+
+    if(!request->data)
+    {
+        response->success = false;
+        response->message = "Set data=true to reset odometry";
+        return true;
+    }
+
+    if(!_odometry)
+    {
+        response->success = false;
+        response->message = "Odometry is not initialized";
+        return true;
+    }
+
+    _odometry->reset();
+    RCLCPP_INFO(this->get_logger(), "%s", "Odometry reset");
+
+    response->success = true;
+    response->message = "Odometry reset";
     return true;
 }
 

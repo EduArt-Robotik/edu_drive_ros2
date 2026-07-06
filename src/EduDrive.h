@@ -101,10 +101,16 @@ private:
       const std::shared_ptr<std_srvs::srv::SetBool_Request> request,
       const std::shared_ptr<std_srvs::srv::SetBool_Response> response);
 
+    bool resetOdometryCallback(
+      const std::shared_ptr<rmw_request_id_t> header,
+      const std::shared_ptr<std_srvs::srv::SetBool_Request> request,
+      const std::shared_ptr<std_srvs::srv::SetBool_Response> response);
+
   // Input topics / services
   rclcpp::Subscription<sensor_msgs::msg::Joy>::SharedPtr _subJoy;
   rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr _subVel;
   rclcpp::Service<std_srvs::srv::SetBool>::SharedPtr _srvEnable;
+  rclcpp::Service<std_srvs::srv::SetBool>::SharedPtr _srvResetOdometry;
 
   // Data available from motor controllers
   rclcpp::Publisher<std_msgs::msg::ByteMultiArray>::SharedPtr _pubEnabled;
