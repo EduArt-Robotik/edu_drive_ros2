@@ -83,6 +83,8 @@ private:
 
     static constexpr double RADS2RPM = 60.0 / (2.0 * M_PI);
     static constexpr double RPM2RADS = (2.0 * M_PI) / 60.0;
+    static constexpr unsigned int MOTOR_CHANNELS = 2;
+    static constexpr unsigned int KINEMATIC_VECTOR_SIZE = 3;
 
     void hardwareWorker();
 

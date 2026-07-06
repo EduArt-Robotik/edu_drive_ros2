@@ -1,5 +1,6 @@
 #include "EduDrive.h"
 
+#include <cmath>
 #include <fcntl.h>
 #include <sys/ioctl.h>
 #include <linux/gpio.h>
@@ -61,15 +62,17 @@ void EduDrive::initDrive(std::vector<ControllerParams> cp, std::shared_ptr<Socke
             kinematicModel.push_back(kinematics);
             double kx = kinematics[0];
             double kw = kinematics[2];
-            double rpmMax = std::min(cp[i].motorParams[0].rpmMax, cp[i].motorParams[1].rpmMax); // the slowest motor determines the maximum speed of the system
-            if(fabs(kx)>1e-3)
+            double rpmMax = cp[i].motorParams[0].rpmMax;
+            for (unsigned int k = 1; k < MOTOR_CHANNELS; ++k)
+                rpmMax = std::min(rpmMax, cp[i].motorParams[k].rpmMax); // the slowest motor determines the maximum speed of the system
+            if(std::fabs(kx)>1e-3)
             {
-                double vMax = fabs(rpmMax * RPM2RADS / kx);
+                double vMax = std::fabs(rpmMax * RPM2RADS / kx);
                 if(vMax > _vMax) _vMax = vMax;
             }
-            if(fabs(kw)>1e-3)
+            if(std::fabs(kw)>1e-3)
             {
-                double omegaMax = fabs(rpmMax * RPM2RADS / kw);
+                double omegaMax = std::fabs(rpmMax * RPM2RADS / kw);
                 if(omegaMax > _omegaMax) _omegaMax = omegaMax;
                 }
         }
@@ -264,38 +267,33 @@ void EduDrive::controlMotors(double vFwd, double vLeft, double omega)
 
     _lastCmd = this->get_clock()->now();
 
-    std::vector<std::array<double, 2>> motors(_mc.size());
+    std::vector<std::array<double, MOTOR_CHANNELS>> motors(_mc.size());
     double scale = 1.0;
 
     // scale velocities relative to the slowest motor of the system
     for (unsigned int i = 0; i < _mc.size(); ++i)
     {
-        const auto& rpmMax0 = _mc[i]->getMotorParams()[0].rpmMax;
-        const auto& rpmMax1 = _mc[i]->getMotorParams()[1].rpmMax;
-        const auto& kin0 = _mc[i]->getMotorParams()[0].kinematics;
-        const auto& kin1 = _mc[i]->getMotorParams()[1].kinematics;
+      for(unsigned int j = 0; j < MOTOR_CHANNELS; ++j){
 
-        motors[i][0] = kin0[0] * vFwd + kin0[1] * vLeft + kin0[2] * omega;
-        motors[i][1] = kin1[0] * vFwd + kin1[1] * vLeft + kin1[2] * omega;
+        const auto& rpmMax = _mc[i]->getMotorParams()[j].rpmMax;
+        const auto& kin = _mc[i]->getMotorParams()[j].kinematics;
 
-        const double rpmMaxRad0 = rpmMax0 * RPM2RADS;
-        const double rpmMaxRad1 = rpmMax1 * RPM2RADS;
+        motors[i][j] = kin[0] * vFwd + kin[1] * vLeft + kin[2] * omega;
 
-        if (std::abs(motors[i][0]) > rpmMaxRad0) {
-            scale = std::min(scale, rpmMaxRad0 / std::abs(motors[i][0]));
+        const double rpmMaxRad = rpmMax * RPM2RADS;
+
+        if (std::abs(motors[i][j]) > rpmMaxRad) {
+            scale = std::min(scale, rpmMaxRad / std::abs(motors[i][j]));
         }
-        if (std::abs(motors[i][1]) > rpmMaxRad1) {
-            scale = std::min(scale, rpmMaxRad1 / std::abs(motors[i][1]));
-        }
+      }
     }
 
     // apply scale factor to all motors
     for (unsigned int i = 0; i < _mc.size(); ++i)
     {
-        double w[2] = {
-            motors[i][0] * scale * RADS2RPM,
-            motors[i][1] * scale * RADS2RPM
-        };
+        double w[MOTOR_CHANNELS];
+        for (unsigned int j = 0; j < MOTOR_CHANNELS; ++j)
+            w[j] = motors[i][j] * scale * RADS2RPM;
         _mc[i]->setRPM(w);
 
         if (_verbosity)
@@ -322,7 +320,7 @@ void EduDrive::hardwareWorker()
 
     for (auto& mc : _mc)
     {
-        double response[2] = {0.0, 0.0};
+        double response[MOTOR_CHANNELS] = {};
         bool enableState = false;
         if(controllersInitialized)
         {
@@ -346,10 +344,10 @@ void EduDrive::hardwareWorker()
                 disable();
             }
         }
-        msgRPM.data.push_back(static_cast<float>(response[0]));
-        msgRPM.data.push_back(static_cast<float>(response[1]));
-        rpmForOdometry.push_back(response[0]);
-        rpmForOdometry.push_back(response[1]);
+        for (unsigned int j = 0; j < MOTOR_CHANNELS; ++j) {
+            msgRPM.data.push_back(static_cast<float>(response[j]));
+            rpmForOdometry.push_back(response[j]);
+        }
         msgEnabled.data.push_back(enableState);
     }
 
