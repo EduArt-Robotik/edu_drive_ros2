@@ -29,7 +29,7 @@ int main(int argc, char *argv[])
 
    // Ensure a proper range for the timeout value
    // A lag more than a second should not be tolerated
-   if (timeout < 0 && timeout > 1000)
+   if (timeout < 0 || timeout > 1000)
    {
       RCLCPP_WARN_STREAM(edu_drive->get_logger(), "Given timeout (" << timeout << " ms) exceeds range from 0 to 1000 ms. Setting timeout to 300 ms");
       timeout = 300;
