@@ -15,7 +15,7 @@ namespace edu
 {
 
 SocketCAN::SocketCAN(std::string devFile) :
-  _soc(0),
+  _soc(-1),
   _listenerIsRunning(false),
   _shutDownListener(false),
   _portOpen(false),
@@ -56,13 +56,23 @@ bool SocketCAN::openPort(const char *port)
   addr.can_family = AF_CAN;
   std::strcpy(ifr.ifr_name, port);
 
-  if (ioctl(_soc, SIOCGIFINDEX, &ifr) < 0) return false;
+  if (ioctl(_soc, SIOCGIFINDEX, &ifr) < 0)
+  {
+    close(_soc);
+    _soc = -1;
+    return false;
+  }
 
   addr.can_ifindex = ifr.ifr_ifindex;
 
   fcntl(_soc, F_SETFL, O_NONBLOCK);
 
-  if (bind(_soc, (struct sockaddr *)&addr, sizeof(addr)) < 0) return false;
+  if (bind(_soc, (struct sockaddr *)&addr, sizeof(addr)) < 0)
+  {
+    close(_soc);
+    _soc = -1;
+    return false;
+  }
 
   return true;
 }
@@ -161,9 +171,10 @@ void SocketCAN::stopListener()
 bool SocketCAN::closePort()
 {
   bool retval = false;
-  if(_soc)
+  if(_soc >= 0)
   {
     retval = (close(_soc)==0);
+    _soc = -1;
   }
   return retval;
 }
