@@ -239,7 +239,7 @@ bool MotorController::configureResponse(enum CanResponse mode)
 
 bool MotorController::invertEncoderPolarity(bool invert[2])
 {
-  _cf.can_dlc = 2;
+  _cf.can_dlc = 3;
   _cf.data[0] = CMD_MOTOR_INVERTENC;
   _cf.data[1] = (invert[0]) ? 1 : 0;
   _cf.data[2] = (invert[1]) ? 1 : 0;

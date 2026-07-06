@@ -151,7 +151,11 @@ bool SocketCAN::listener()
 void SocketCAN::stopListener()
 {
   _shutDownListener = true;
-  _thread->join();
+
+  if(_thread && _thread->joinable())
+  {
+    _thread->join();
+  }
 }
 
 bool SocketCAN::closePort()
