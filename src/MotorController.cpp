@@ -2,6 +2,7 @@
 #include <iostream>
 #include <cmath>
 #include <string.h>
+#include <cstring>
 #include <iomanip>
 #include <unistd.h>
 #include "can/canprotocol.h"
@@ -539,11 +540,12 @@ bool MotorController::sendFloat(int cmd, float f)
   _cf.can_dlc = 5;
 
   _cf.data[0] = cmd;
-  int* ival = (int*)&f;
-  _cf.data[1] = (*ival & 0xFF000000) >> 24;
-  _cf.data[2] = (*ival & 0x00FF0000) >> 16;
-  _cf.data[3] = (*ival & 0x0000FF00) >> 8;
-  _cf.data[4] = (*ival & 0x000000FF);
+  std::uint32_t u = 0;
+  std::memcpy(&u, &f, sizeof(u));
+  _cf.data[1] = (u & 0xFF000000) >> 24;
+  _cf.data[2] = (u & 0x00FF0000) >> 16;
+  _cf.data[3] = (u & 0x0000FF00) >> 8;
+  _cf.data[4] = (u & 0x000000FF);
 
   return _can->send(&_cf);
 }
@@ -553,11 +555,12 @@ bool MotorController::sendFloat(int cmd, float f, int channel)
   _cf.can_dlc = 6;
 
   _cf.data[0] = cmd;
-  int* ival = (int*)&f;
-  _cf.data[1] = (*ival & 0xFF000000) >> 24;
-  _cf.data[2] = (*ival & 0x00FF0000) >> 16;
-  _cf.data[3] = (*ival & 0x0000FF00) >> 8;
-  _cf.data[4] = (*ival & 0x000000FF);
+  std::uint32_t u = 0;
+  std::memcpy(&u, &f, sizeof(u));
+  _cf.data[1] = (u & 0xFF000000) >> 24;
+  _cf.data[2] = (u & 0x00FF0000) >> 16;
+  _cf.data[3] = (u & 0x0000FF00) >> 8;
+  _cf.data[4] = (u & 0x000000FF);
   _cf.data[5] = channel;
 
   return _can->send(&_cf);
