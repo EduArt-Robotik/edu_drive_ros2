@@ -1,5 +1,7 @@
 #pragma once
 
+#include "CommandMultiplexer.h"
+#include "JoystickInputHandler.h"
 #include "MotorController.h"
 #include "Odometry.h"
 #include "PowerManagementBoard.h"
@@ -21,28 +23,6 @@
 #include <vector>
 
 namespace edu {
-
-struct JoystickMap {
-  struct Buttons {
-    int omniMode = 11;
-    int servoLeft = 2;
-    int servoRight = 3;
-    int disable = 9;
-    int enable = 10;
-  } buttons;
-
-  struct Axes {
-    int forward = 1;
-    int left = 0;
-    int turn = 2;
-    int throttle = 3;
-    int fineAdjust = 4;
-  } axes;
-
-  struct Config {
-    bool omniModeLatching = true;
-  } config;
-};
 
 /**
  * @class EduDrive
@@ -66,19 +46,12 @@ public:
 
   /**
    * @brief Initialize drive
-   * @param[in] cp Parameters for the closed-loop controller of all motor
-   * channels
-   * @param[in] can Instance of CAN communication socket. All connected devices
-   * share the communication bus.
-   * @param[in] using_pwr_mgmt Flag indicating whether the power management
-   * module of EduArt is used. This enables additional measurement topics
-   * (voltage and current sensing).
-   * @param[in] verbosity Make the instance of this class more chatty. Debug
-   * information will be printed to stdout.
+   * @param[in] cp Parameters for the closed-loop controller of all motor channels
+   * @param[in] can Instance of CAN communication socket. All connected devices share the communication bus.
+   * @param[in] using_pwr_mgmt Flag indicating whether the power management module of EduArt is used. This enables additional measurement topics(voltage and current sensing).
+   * @param[in] verbosity Make the instance of this class more chatty. Debug information will be printed to stdout.
    */
-  void initDrive(std::vector<ControllerParams> cp,
-                 std::shared_ptr<SocketCAN> can, const JoystickMap &joystickMap,
-                 bool using_pwr_mgmt = true, bool verbosity = false);
+  void initDrive(std::vector<ControllerParams> cp, std::shared_ptr<SocketCAN> can, const JoystickInputHandler::JoystickMap &joystickMap, bool using_pwr_mgmt = true, bool verbosity = false);
 
   /**
    * @brief Blocking ROS handler method. Call this method to enter the ROS
@@ -149,6 +122,11 @@ private:
   // Odometry
   std::unique_ptr<tf2_ros::TransformBroadcaster> _tf_broadcaster;
 
+  // Input logic
+  CommandMultiplexer _commandMultiplexer;
+  std::unique_ptr<JoystickInputHandler> _joystickInput;
+  
+
   rclcpp::Time _lastCmd;           // Time elapsed since last call
   std::shared_ptr<SocketCAN> _can; // Pointer to CAN instance
 
@@ -162,11 +140,6 @@ private:
   double _vMax;
   double _omegaMax;
   double _servoPos;
-  JoystickMap _joyMap;
-  int _joyOmniPrev = -1;
-  int _joyDisablePrev = -1;
-  int _joyEnablePrev = -1;
-  bool _omniModeEnabled = false;
 
   bool _enabled;
   bool _using_pwr_mgmt;

@@ -39,7 +39,7 @@ int main(int argc, char *argv[])
    edu_drive->declare_parameter("joy.axes.fineAdjust", 4);
    edu_drive->declare_parameter("joy.config.omniModeLatching", true);
 
-   edu::JoystickMap joyMap;
+   edu::JoystickInputHandler::JoystickMap joyMap;
    joyMap.buttons.enable     = edu_drive->get_parameter("joy.buttons.enable").as_int();
    joyMap.buttons.disable    = edu_drive->get_parameter("joy.buttons.disable").as_int();
    joyMap.buttons.omniMode   = edu_drive->get_parameter("joy.buttons.omniMode").as_int();
