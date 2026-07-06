@@ -9,7 +9,7 @@
 namespace edu
 {
 
-EduDrive::EduDrive() : Node("edu_drive_node")
+EduDrive::EduDrive() : Node("edu_drive_node"), _servoPos(0.0)
 {
 
 }
