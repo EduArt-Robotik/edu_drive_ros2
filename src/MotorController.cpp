@@ -227,7 +227,7 @@ bool MotorController::broadcastExternalSync()
   return retval;
 }
 
-std::vector<MotorParams> MotorController::getMotorParams()
+const std::vector<MotorParams>& MotorController::getMotorParams()
 {
   return _params.motorParams;
 }

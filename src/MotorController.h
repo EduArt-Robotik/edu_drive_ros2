@@ -210,7 +210,7 @@ namespace edu
      *
      * @return MotorParams vector
      */
-    std::vector<MotorParams> getMotorParams();
+    const std::vector<MotorParams>& getMotorParams();
 
     /**
      * Configure response of motor controller (revolutions per minute or position)
