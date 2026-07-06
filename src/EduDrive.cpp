@@ -257,16 +257,19 @@ void EduDrive::controlMotors(float vFwd, float vLeft, float omega)
     std::vector<std::array<float, 2>> motors(_mc.size());
     float scale = 1.0f;
 
+    // scale velocities relative to the slowest motor of the system
     for (unsigned int i = 0; i < _mc.size(); ++i)
     {
-        std::vector<double> kin0 = _mc[i]->getMotorParams()[0].kinematics;
-        std::vector<double> kin1 = _mc[i]->getMotorParams()[1].kinematics;
+        const auto& rpmMax0 = _mc[i]->getMotorParams()[0].rpmMax;
+        const auto& rpmMax1 = _mc[i]->getMotorParams()[1].rpmMax;
+        const auto& kin0 = _mc[i]->getMotorParams()[0].kinematics;
+        const auto& kin1 = _mc[i]->getMotorParams()[1].kinematics;
 
         motors[i][0] = static_cast<float>(kin0[0] * vFwd + kin0[1] * vLeft + kin0[2] * omega);
         motors[i][1] = static_cast<float>(kin1[0] * vFwd + kin1[1] * vLeft + kin1[2] * omega);
 
-        float rpmMaxRad0 = _mc[i]->getMotorParams()[0].rpmMax * RPM2RADS;
-        float rpmMaxRad1 = _mc[i]->getMotorParams()[1].rpmMax * RPM2RADS;
+        const float rpmMaxRad0 = rpmMax0 * RPM2RADS;
+        const float rpmMaxRad1 = rpmMax1 * RPM2RADS;
 
         if (std::abs(motors[i][0]) > rpmMaxRad0) {
             scale = std::min(scale, rpmMaxRad0 / std::abs(motors[i][0]));
@@ -276,6 +279,7 @@ void EduDrive::controlMotors(float vFwd, float vLeft, float omega)
         }
     }
 
+    // apply scale factor to all motors
     for (unsigned int i = 0; i < _mc.size(); ++i)
     {
         float w[2] = {
