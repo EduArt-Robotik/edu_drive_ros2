@@ -53,7 +53,6 @@ void EduDrive::initDrive(std::vector<ControllerParams> cp, std::shared_ptr<Socke
     _pwr_mgmt  = std::make_unique<PowerManagementBoard>(can.get(), verbosity);
 
     _vMax = 0.f;
-    _rpmMaxRad = 0.f;
 
     bool isKinematicsValid = true;
     for (unsigned int i = 0; i < cp.size(); ++i)
@@ -76,7 +75,7 @@ void EduDrive::initDrive(std::vector<ControllerParams> cp, std::shared_ptr<Socke
     for (unsigned int i = 0; i < cp.size(); ++i)
     {
         _mc.push_back(std::make_unique<edu::MotorController>(can.get(), cp[i], verbosity));
-        
+
         for(unsigned int j=0; j<_mc[i]->getMotorParams().size(); j++)
         {
             std::vector<double> kinematics = _mc[i]->getMotorParams()[j].kinematics;
@@ -84,8 +83,6 @@ void EduDrive::initDrive(std::vector<ControllerParams> cp, std::shared_ptr<Socke
             double kx = kinematics[0];
             double kw = kinematics[2];
             float rpmMax = std::min(cp[i].motorParams[0].rpmMax, cp[i].motorParams[1].rpmMax); // the slowest motor determines the maximum speed of the system
-            float rpmMaxRad = rpmMax * RPM2RADS;
-            if (rpmMaxRad > _rpmMaxRad) _rpmMaxRad = rpmMaxRad;
             if(fabs(kx)>1e-3)
             {
                 float vMax = fabs(rpmMax * RPM2RADS / kx);
@@ -258,7 +255,7 @@ void EduDrive::controlMotors(float vFwd, float vLeft, float omega)
     _lastCmd = this->get_clock()->now();
 
     std::vector<std::array<float, 2>> motors(_mc.size());
-    float rpmMaxRad = 0.0f;
+    float scale = 1.0f;
 
     for (unsigned int i = 0; i < _mc.size(); ++i)
     {
@@ -268,13 +265,16 @@ void EduDrive::controlMotors(float vFwd, float vLeft, float omega)
         motors[i][0] = static_cast<float>(kin0[0] * vFwd + kin0[1] * vLeft + kin0[2] * omega);
         motors[i][1] = static_cast<float>(kin1[0] * vFwd + kin1[1] * vLeft + kin1[2] * omega);
 
-        rpmMaxRad = std::max(rpmMaxRad, std::abs(motors[i][0]));
-        rpmMaxRad = std::max(rpmMaxRad, std::abs(motors[i][1]));
-    }
+        float rpmMaxRad0 = _mc[i]->getMotorParams()[0].rpmMax * RPM2RADS;
+        float rpmMaxRad1 = _mc[i]->getMotorParams()[1].rpmMax * RPM2RADS;
 
-    float scale = 1.0f;
-    if (rpmMaxRad > _rpmMaxRad)
-        scale = _rpmMaxRad / rpmMaxRad;
+        if (std::abs(motors[i][0]) > rpmMaxRad0) {
+            scale = std::min(scale, rpmMaxRad0 / std::abs(motors[i][0]));
+        }
+        if (std::abs(motors[i][1]) > rpmMaxRad1) {
+            scale = std::min(scale, rpmMaxRad1 / std::abs(motors[i][1]));
+        }
+    }
 
     for (unsigned int i = 0; i < _mc.size(); ++i)
     {
