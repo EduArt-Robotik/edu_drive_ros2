@@ -65,12 +65,12 @@ int Odometry::update(edu::Vec mot_pos_vec)
 
     int status = 1;
 
-    if((_odometry_mode == ODOMETRY_ABSOLUTE_MODE) || (_is_pos_init)){
+    if((_odometry_mode == ODOMETRY_RELATIVE_MODE) || (_is_pos_init)){
         
         edu::Vec vOmega = mot_pos_vec;
 
-        // In case absolute values are give, calculate the difference to prev. position
-        if(_odometry_mode == ODOMETRY_RELATIVE_MODE){
+        // In case absolute values are given, calculate the difference to previous position.
+        if(_odometry_mode == ODOMETRY_ABSOLUTE_MODE){
             for(int i = 0; i < size; i++){
                 vOmega.at(i) -= _prev_pos_vec.at(i);
             }
@@ -110,12 +110,10 @@ int Odometry::update(uint64_t time_ns, edu::Vec mot_vel_vec)
 
     if((_odometry_mode == ODOMETRY_RELATIVE_MODE) || (_is_vel_init)){
 
-        // In case absolute values are give, calculate the difference to prev. time
-        double dt_s = (_odometry_mode == ODOMETRY_ABSOLUTE_MODE) ? (double)(time_ns - _prev_time_ns) / 10e9F : (double)time_ns / 10e9F;
-        
-        // TODO: Find out where the error is and fix this!
-        // Magic number fix:
-        dt_s *= 10;
+        // In case absolute values are given, calculate the difference to previous time.
+        double dt_s = (_odometry_mode == ODOMETRY_ABSOLUTE_MODE)
+                ? static_cast<double>(time_ns - _prev_time_ns) / 1e9
+                : static_cast<double>(time_ns) / 1e9;
 
         // Calculate change in motor position
         // Convert rpm to rad per sec
