@@ -26,26 +26,6 @@ void EduDrive::initDrive(std::vector<ControllerParams> cp, std::shared_ptr<Socke
     _using_pwr_mgmt = using_pwr_mgmt;
     _verbosity = verbosity;
     _enabled = false;
-    
-    _subJoy     = this->create_subscription<sensor_msgs::msg::Joy>("joy", 1, std::bind(&EduDrive::joyCallback, this, std::placeholders::_1));
-    _subVel     = this->create_subscription<geometry_msgs::msg::Twist>("vel/teleop", 10, std::bind(&EduDrive::velocityCallback, this, std::placeholders::_1));
-    _srvEnable  = this->create_service<std_srvs::srv::SetBool>("enable", std::bind(&EduDrive::enableCallback, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
-
-    // Publisher of motor shields
-    _pubEnabled = this->create_publisher<std_msgs::msg::ByteMultiArray>("enabled", 1);
-    _pubRPM     = this->create_publisher<std_msgs::msg::Float32MultiArray>("rpm", 1);
-
-    // Publisher of carrier shield
-    _pubTemp             = this->create_publisher<std_msgs::msg::Float32>("temperature", 1);
-    _pubVoltageAdapter   = this->create_publisher<std_msgs::msg::Float32>("voltageAdapter", 1);
-    _pubImu              = this->create_publisher<sensor_msgs::msg::Imu>("imu", 1);
-    
-    // Publisher of power management shield
-    _pubVoltagePwrMgmt = this->create_publisher<std_msgs::msg::Float32>("voltagePwrMgmt", 1);
-    _pubCurrentPwrMgmt = this->create_publisher<std_msgs::msg::Float32>("currentPwrMgmt", 1);
-
-    // Broadcaster for odometry data
-    _tf_broadcaster = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
 
     // CAN devices
     _adapter   = std::make_unique<RPiAdapterBoard>(can.get(), verbosity);
@@ -56,13 +36,11 @@ void EduDrive::initDrive(std::vector<ControllerParams> cp, std::shared_ptr<Socke
     _omegaMax = 0.0;
 
     bool isKinematicsValid = true;
-    for (unsigned int i = 0; i < cp.size(); ++i)
-    {
-        std::vector<MotorParams> motorParams = cp[i].motorParams;
 
-        for (unsigned int j = 0; j < motorParams.size(); ++j)
+    for(const auto& controllerParams : cp){
+      for (const auto& motorParam : controllerParams.motorParams)
         {
-            isKinematicsValid &= (motorParams[j].kinematics.size()==3);
+            isKinematicsValid &= (motorParam.kinematics.size()==KINEMATIC_VECTOR_SIZE);
         }
     }
 
@@ -96,9 +74,31 @@ void EduDrive::initDrive(std::vector<ControllerParams> cp, std::shared_ptr<Socke
                 }
         }
     }
+
     edu::Matrix K(kinematicModel);
     edu::Matrix Kinv = K.pseudoInverse();
     _odometry = std::make_unique<Odometry>(ODOMETRY_ABSOLUTE_MODE, Kinv);
+
+    // Publisher of motor shields
+    _pubEnabled = this->create_publisher<std_msgs::msg::ByteMultiArray>("enabled", 1);
+    _pubRPM     = this->create_publisher<std_msgs::msg::Float32MultiArray>("rpm", 1);
+
+    // Publisher of carrier shield
+    _pubTemp             = this->create_publisher<std_msgs::msg::Float32>("temperature", 1);
+    _pubVoltageAdapter   = this->create_publisher<std_msgs::msg::Float32>("voltageAdapter", 1);
+    _pubImu              = this->create_publisher<sensor_msgs::msg::Imu>("imu", 1);
+    
+    // Publisher of power management shield
+    _pubVoltagePwrMgmt = this->create_publisher<std_msgs::msg::Float32>("voltagePwrMgmt", 1);
+    _pubCurrentPwrMgmt = this->create_publisher<std_msgs::msg::Float32>("currentPwrMgmt", 1);
+
+    // Broadcaster for odometry data
+    _tf_broadcaster = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
+
+    // Subscribers last after everything else is initialized, to avoid receiving messages before the robot is ready
+    _subJoy     = this->create_subscription<sensor_msgs::msg::Joy>("joy", 1, std::bind(&EduDrive::joyCallback, this, std::placeholders::_1));
+    _subVel     = this->create_subscription<geometry_msgs::msg::Twist>("vel/teleop", 10, std::bind(&EduDrive::velocityCallback, this, std::placeholders::_1));
+    _srvEnable  = this->create_service<std_srvs::srv::SetBool>("enable", std::bind(&EduDrive::enableCallback, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
     
     RCLCPP_INFO_STREAM(this->get_logger(), "Instantiated robot with vMax: " << _vMax << " m/s and omegaMax: " << _omegaMax << " rad/s");
 }
