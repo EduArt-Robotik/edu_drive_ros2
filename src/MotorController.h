@@ -4,6 +4,7 @@
 #include <vector>
 #include <chrono>
 #include <tuple>
+#include <mutex>
 
 namespace edu
 {
@@ -419,6 +420,9 @@ namespace edu
      */
     void notify(struct can_frame *frame);
 
+    using Mutex = std::mutex;
+    using LockGuard = std::lock_guard<Mutex>;
+
     SocketCAN *_can;
 
     int32_t _inputAddress;
@@ -446,6 +450,8 @@ namespace edu
     long _usec;
 
     Version _version;
+
+    mutable Mutex _stateMutex;
   };
 
 }

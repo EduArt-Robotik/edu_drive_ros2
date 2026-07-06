@@ -70,6 +70,7 @@ MotorController::~MotorController()
 
 bool MotorController::isInitialized()
 {
+  LockGuard guard(_stateMutex);
   return _isInit;
 }
 
@@ -172,6 +173,7 @@ void MotorController::init()
 
   if(retval)
   {
+    LockGuard guard(_stateMutex);
     _isInit = true;
   }
   else
@@ -183,6 +185,7 @@ void MotorController::init()
 
 void MotorController::deinit()
 {
+  LockGuard guard(_stateMutex);
   _isInit = false;
 }
 
@@ -208,6 +211,7 @@ bool MotorController::disable()
 
 bool MotorController::getEnableState()
 {
+  LockGuard guard(_stateMutex);
   return _enabled;
 }
 
@@ -370,6 +374,7 @@ bool MotorController::setRPM(double rpm[2])
 
 void MotorController::getWheelResponse(double response[2])
 {
+  LockGuard guard(_stateMutex);
   if(_params.responseMode == CAN_RESPONSE_RPM)
   {
     response[0] = _rpm[0];
@@ -453,6 +458,7 @@ double MotorController::getInputWeight()
 
 Version MotorController::getFirmwareVersion()
 {
+  LockGuard guard(_stateMutex);
   return _version;
 }
 
@@ -465,17 +471,25 @@ bool MotorController::requestFirmwareVersion(std::chrono::milliseconds timeout)
   auto startTime = std::chrono::steady_clock::now();
 
   if(timeout > 0ms){
-    while((!_version.isValid()) && ((std::chrono::steady_clock::now() - startTime) < timeout))
+    while(((std::chrono::steady_clock::now() - startTime) < timeout))
     {
+      {
+        LockGuard guard(_stateMutex);
+        if(_version.isValid()) break;
+      }
       std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
   }
 
-  return _version.isValid();
+  {
+    LockGuard guard(_stateMutex);
+    return _version.isValid();
+  }
 }
 
 void MotorController::notify(struct can_frame* frame)
 {
+  LockGuard guard(_stateMutex);
   if(frame->can_dlc==6)
   {
     if(frame->data[0] == RESPONSE_MOTOR_RPM)
