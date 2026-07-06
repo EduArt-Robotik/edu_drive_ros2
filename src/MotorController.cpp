@@ -16,38 +16,38 @@ MotorController::MotorController(SocketCAN* can, ControllerParams params, bool v
 {
   _isInit    = false;
   
-  if(true)
+  //if(verbosity)
+  //{
+  std::cout << "---------------------------" << std::endl << std::endl;
+  std::cout << "frequencyScale = " << params.frequencyScale << std::endl;
+  std::cout << "inputWeight    = " << params.inputWeight << std::endl;
+  std::cout << "maxPulseWidth  = " << (int)params.maxPulseWidth << std::endl;
+  std::cout << "timeout        = " << params.timeout << std::endl;
+
+  std::cout << "kp             = " << params.kp << std::endl;
+  std::cout << "ki             = " << params.ki << std::endl;
+  std::cout << "kd             = " << params.kd << std::endl;
+  std::cout << "antiWindup     = " << params.antiWindup << std::endl;
+  std::cout << "responseMode   = " << params.responseMode << std::endl;
+
+  std::cout << std::endl << "--- Controller #" << std::hex << params.canID << std::dec << " parameters ---" << std::endl;
+
+  for(unsigned int i=0; i<2; i++)
   {
-    std::cout << "---------------------------" << std::endl << std::endl;
-    std::cout << "frequencyScale = " << params.frequencyScale << std::endl;
-    std::cout << "inputWeight    = " << params.inputWeight << std::endl;
-    std::cout << "maxPulseWidth  = " << (int)params.maxPulseWidth << std::endl;
-    std::cout << "timeout        = " << params.timeout << std::endl;
-
-    std::cout << "kp             = " << params.kp << std::endl;
-    std::cout << "ki             = " << params.ki << std::endl;
-    std::cout << "kd             = " << params.kd << std::endl;
-    std::cout << "antiWindup     = " << params.antiWindup << std::endl;
-    std::cout << "responseMode   = " << params.responseMode << std::endl;
-
-    std::cout << std::endl << "--- Controller #" << std::hex << params.canID << std::dec << " parameters ---" << std::endl;
-
-    for(unsigned int i=0; i<2; i++)
-    {
-      std::cout << "   --- Drive" << i << std::endl;
-      std::cout << "       channel: " << _params.motorParams[i].channel << std::endl;
-      std::cout << "       kinematics: ";
-      for(unsigned int j=0; j<_params.motorParams[i].kinematics.size(); j++)
-        std::cout << _params.motorParams[i].kinematics[j] << " ";
-      std::cout << std::endl;
-      std::cout << "       gearRatio      = " << params.motorParams[i].gearRatio << std::endl;
-      std::cout << "       encoderRatio   = " << params.motorParams[i].encoderRatio << std::endl;
-      std::cout << "       rpmMax         = " << params.motorParams[i].rpmMax << std::endl;
-      std::cout << "       invertEnc      = " << params.motorParams[i].invertEnc << std::endl;
-    }
-
-    std::cout << "---------------------------" << std::endl << std::endl;
+    std::cout << "   --- Drive" << i << std::endl;
+    std::cout << "       channel: " << _params.motorParams[i].channel << std::endl;
+    std::cout << "       kinematics: ";
+    for(unsigned int j=0; j<_params.motorParams[i].kinematics.size(); j++)
+      std::cout << _params.motorParams[i].kinematics[j] << " ";
+    std::cout << std::endl;
+    std::cout << "       gearRatio      = " << params.motorParams[i].gearRatio << std::endl;
+    std::cout << "       encoderRatio   = " << params.motorParams[i].encoderRatio << std::endl;
+    std::cout << "       rpmMax         = " << params.motorParams[i].rpmMax << std::endl;
+    std::cout << "       invertEnc      = " << params.motorParams[i].invertEnc << std::endl;
   }
+
+  std::cout << "---------------------------" << std::endl << std::endl;
+  //}
 
   _can       = can;
   makeCanStdID(SYSID_MC2, params.canID, &_inputAddress, &_outputAddress, &_broadcastAddress);
