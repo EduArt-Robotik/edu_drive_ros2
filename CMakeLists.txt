@@ -18,6 +18,8 @@ find_package(tf2 REQUIRED)
 add_executable(${PROJECT_NAME}_node
   src/edu_drive_node.cpp
   src/EduDrive.cpp
+  src/CommandMultiplexer.cpp
+  src/JoystickInputHandler.cpp
   src/MotorController.cpp
   src/RPiAdapterBoard.cpp
   src/RPiExtensionBoard.cpp

@@ -7,13 +7,10 @@
 namespace edu
 {
 
-    constexpr double edu_PI = 3.14159265358979323846;
-    constexpr double rpm_to_rad_per_sec_factor = 2 * edu_PI / 60.0F;
-
-    enum OdometryMode
+    enum class OdometryMode
     {
-        ODOMETRY_RELATIVE_MODE = 0,
-        ODOMETRY_ABSOLUTE_MODE = 1
+        Relative, ///< Odometry is calculated based on changes in wheel positions (position update) or from the time difference since the last update (velocity update)
+        Absolute, ///< Odometry is calculated based on the absolute wheel positions (position update) or from the absolute time (velocity update)
     };
 
     struct Pose
@@ -87,7 +84,7 @@ namespace edu
         /**
          * Update odometry estimation with new wheel speeds
          * Absolute time or change in time depends on odometry_mode setting
-         * @param[in] time_ns Time in nanoseconds
+         * @param[in] time_ns Time in nanoseconds. Either absolute time or change in time depending on the OdometryMode setting
          * @param[in] mot_vel_vec Vector of the motor velocities.
          * @retval status 1: o.k., status -1: error in last step (no update)
          */
@@ -101,6 +98,9 @@ namespace edu
          * @retval status 1: o.k., status -1: error in calculation
          */
         int propagate_position(edu::Vec twistVec);
+
+        static constexpr double EDU_PI = 3.14159265358979323846;
+        static constexpr double RPM_2_RAD_PER_SEC = 2 * EDU_PI / 60.0F;
 
         Pose _pose;
         OdometryMode _odometry_mode;

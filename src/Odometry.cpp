@@ -65,12 +65,12 @@ int Odometry::update(edu::Vec mot_pos_vec)
 
     int status = 1;
 
-    if((_odometry_mode == ODOMETRY_ABSOLUTE_MODE) || (_is_pos_init)){
+    if((_odometry_mode == edu::OdometryMode::Relative) || (_is_pos_init)){
         
         edu::Vec vOmega = mot_pos_vec;
 
-        // In case absolute values are give, calculate the difference to prev. position
-        if(_odometry_mode == ODOMETRY_RELATIVE_MODE){
+        // In case absolute values are given, calculate the difference to previous position.
+        if(_odometry_mode == edu::OdometryMode::Absolute){
             for(int i = 0; i < size; i++){
                 vOmega.at(i) -= _prev_pos_vec.at(i);
             }
@@ -108,20 +108,18 @@ int Odometry::update(uint64_t time_ns, edu::Vec mot_vel_vec)
 
     int status = 1;
 
-    if((_odometry_mode == ODOMETRY_RELATIVE_MODE) || (_is_vel_init)){
+    if((_odometry_mode == edu::OdometryMode::Relative) || (_is_vel_init)){
 
-        // In case absolute values are give, calculate the difference to prev. time
-        double dt_s = (_odometry_mode == ODOMETRY_ABSOLUTE_MODE) ? (double)(time_ns - _prev_time_ns) / 10e9F : (double)time_ns / 10e9F;
-        
-        // TODO: Find out where the error is and fix this!
-        // Magic number fix:
-        dt_s *= 10;
+        // In case absolute values are given, calculate the difference to previous time.
+        double dt_s = (_odometry_mode == edu::OdometryMode::Absolute)
+                ? static_cast<double>(time_ns - _prev_time_ns) / 1e9
+                : static_cast<double>(time_ns) / 1e9;
 
         // Calculate change in motor position
         // Convert rpm to rad per sec
         edu::Vec vOmega = mot_vel_vec;
         
-        double factor = dt_s * rpm_to_rad_per_sec_factor;
+        const double factor = dt_s * RPM_2_RAD_PER_SEC;
         for(auto& v : vOmega){
             v *= factor;
         }
@@ -165,7 +163,7 @@ int Odometry::propagate_position(edu::Vec twistVec)
     // Calculate movement in world coordinate system
     double dx_world = 0;
     double dy_world = 0;
-    if(dtheta < _straight_line_threshold){
+    if(std::abs(dtheta) < _straight_line_threshold){
         // Straight line move
         dx_world = ds * cos(alpha);
         dy_world = ds * sin(alpha);

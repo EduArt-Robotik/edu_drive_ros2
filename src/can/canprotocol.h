@@ -43,7 +43,7 @@ namespace edu
 #define CMD_MOTOR_ENABLE          0x01
 #define CMD_MOTOR_DISABLE         0x02
 #define CMD_MOTOR_SETTIMEOUT      0x03
-#define CMD_MOTOR_SETPWMMAX       0x04
+#define CMD_MOTOR_SETRPMMAX       0x04
 #define CMD_MOTOR_SENDRPM         0x05
 #define CMD_MOTOR_SENDPOS         0x06
 #define CMD_MOTOR_INVERTENC       0x07

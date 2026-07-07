@@ -5,14 +5,13 @@
     canInterface: CAN2
     frequencyScale: 32
     inputWeight: 0.2
-    maxPulseWidth: 100
     timeout: 300
     kp: 0.4
     ki: 4.0
     kd: 0.0
     antiWindup: 1
     responseMode: 0
-    
+
     controllers: 2
     
     controller0:
@@ -48,3 +47,19 @@
         rpmMax: 140.0
         invertEnc: 1
         kinematics: [-20.0, 0.0, -6.1]
+
+    joy:
+      buttons:
+        enable: 10
+        disable: 9
+        omniMode: 11
+        servoLeft: 2
+        servoRight: 3
+      axes:
+        forward: 1
+        left: 0
+        turn: 2
+        throttle: 3
+        fineAdjust: 4
+      config:
+        omniModeLatching: false

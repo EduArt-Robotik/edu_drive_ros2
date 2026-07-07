@@ -22,29 +22,28 @@ MotorController::MotorController(SocketCAN* can, ControllerParams params, bool v
   std::cout << "---------------------------" << std::endl << std::endl;
   std::cout << "frequencyScale = " << params.frequencyScale << std::endl;
   std::cout << "inputWeight    = " << params.inputWeight << std::endl;
-  std::cout << "maxPulseWidth  = " << (int)params.maxPulseWidth << std::endl;
   std::cout << "timeout        = " << params.timeout << std::endl;
 
   std::cout << "kp             = " << params.kp << std::endl;
   std::cout << "ki             = " << params.ki << std::endl;
   std::cout << "kd             = " << params.kd << std::endl;
   std::cout << "antiWindup     = " << params.antiWindup << std::endl;
-  std::cout << "responseMode   = " << params.responseMode << std::endl;
+  std::cout << "responseMode   = " << static_cast<int>(params.responseMode) << std::endl;
 
   std::cout << std::endl << "--- Controller #" << std::hex << params.canID << std::dec << " parameters ---" << std::endl;
 
   for(unsigned int i=0; i<2; i++)
   {
-    std::cout << "   --- Drive" << i << std::endl;
-    std::cout << "       channel: " << _params.motorParams[i].channel << std::endl;
-    std::cout << "       kinematics: ";
+    std::cout << "   --- Drive" << i << " ---" << std::endl;
+    std::cout << "         channel: " << _params.motorParams[i].channel << std::endl;
+    std::cout << "         kinematics: ";
     for(unsigned int j=0; j<_params.motorParams[i].kinematics.size(); j++)
       std::cout << _params.motorParams[i].kinematics[j] << " ";
     std::cout << std::endl;
-    std::cout << "       gearRatio      = " << params.motorParams[i].gearRatio << std::endl;
-    std::cout << "       encoderRatio   = " << params.motorParams[i].encoderRatio << std::endl;
-    std::cout << "       rpmMax         = " << params.motorParams[i].rpmMax << std::endl;
-    std::cout << "       invertEnc      = " << params.motorParams[i].invertEnc << std::endl;
+    std::cout << "         gearRatio      = " << params.motorParams[i].gearRatio << std::endl;
+    std::cout << "         encoderRatio   = " << params.motorParams[i].encoderRatio << std::endl;
+    std::cout << "         rpmMax         = " << params.motorParams[i].rpmMax << std::endl;
+    std::cout << "         invertEnc      = " << params.motorParams[i].invertEnc << std::endl;
   }
 
   std::cout << "---------------------------" << std::endl << std::endl;
@@ -107,9 +106,10 @@ void MotorController::init()
     retval = false;
   }
   
-  if(!setMaxPulseWidth(_params.maxPulseWidth))
+  double rpmMax[] = {_params.motorParams[0].rpmMax, _params.motorParams[1].rpmMax};
+  if(!setMaxRPM(rpmMax))
   {
-    RCLCPP_ERROR_STREAM(rclcpp::get_logger("MotorController"), "#MotorController Setting maximum pulse width failed for device " << _params.canID << std::endl);
+    RCLCPP_ERROR_STREAM(rclcpp::get_logger("MotorController"), "#MotorController Setting maximum RPM failed for device " << _params.canID << std::endl);
     retval = false;
   }
 
@@ -227,15 +227,15 @@ bool MotorController::broadcastExternalSync()
   return retval;
 }
 
-std::vector<MotorParams> MotorController::getMotorParams()
+const std::vector<MotorParams>& MotorController::getMotorParams()
 {
   return _params.motorParams;
 }
 
-bool MotorController::configureResponse(enum CanResponse mode)
+bool MotorController::configureResponse(CanResponseMode mode)
 {
   _cf.can_dlc = 1;
-  if(mode==CAN_RESPONSE_RPM)
+  if(mode==CanResponseMode::Rpm)
     _cf.data[0] = CMD_MOTOR_SENDRPM;
   else
     _cf.data[0] = CMD_MOTOR_SENDPOS;
@@ -244,11 +244,26 @@ bool MotorController::configureResponse(enum CanResponse mode)
 
 bool MotorController::invertEncoderPolarity(bool invert[2])
 {
-  _cf.can_dlc = 3;
-  _cf.data[0] = CMD_MOTOR_INVERTENC;
-  _cf.data[1] = (invert[0]) ? 1 : 0;
-  _cf.data[2] = (invert[1]) ? 1 : 0;
-  return _can->send(&_cf);
+  bool retval = true;
+
+  
+  if(_version.isValid()){
+    _cf.can_dlc = 3;
+    _cf.data[0] = CMD_MOTOR_INVERTENC;
+    _cf.data[1] = (invert[0]) ? 1 : 0;
+    _cf.data[2] = 0;
+    retval      = _can->send(&_cf);
+
+    _cf.data[1] = (invert[1]) ? 1 : 0;
+    _cf.data[2] = 1;
+    retval     &= _can->send(&_cf);
+  }else{
+    _cf.can_dlc = 2;
+    _cf.data[0] = CMD_MOTOR_INVERTENC;
+    _cf.data[1] = (invert[0]) ? 1 : 0;
+    retval      = _can->send(&_cf);
+  }
+  return retval;
 }
 
 unsigned short MotorController::getCanId()
@@ -275,8 +290,13 @@ unsigned short MotorController::getTimeout()
 
 bool MotorController::setGearRatio(double gearRatio[2])
 {
-  bool retval  = sendFloat(CMD_MOTOR_GEARRATIO, static_cast<float>(gearRatio[0]), 0);
-  retval      &= sendFloat(CMD_MOTOR_GEARRATIO, static_cast<float>(gearRatio[1]), 1);
+  bool retval = true;
+  if(_version.isValid()){
+    retval  = sendFloat(CMD_MOTOR_GEARRATIO, static_cast<float>(gearRatio[0]), 0);
+    retval &= sendFloat(CMD_MOTOR_GEARRATIO, static_cast<float>(gearRatio[1]), 1);
+  }else{
+    retval  = sendFloat(CMD_MOTOR_GEARRATIO, static_cast<float>(gearRatio[0]));
+  }
 
   if(retval){
     _params.motorParams[0].gearRatio = gearRatio[0];
@@ -292,13 +312,41 @@ double MotorController::getGearRatio(size_t motor_num)
 
 bool MotorController::setEncoderTicksPerRev(double encoderTicksPerRev[2])
 {
-  bool retval  = sendFloat(CMD_MOTOR_TICKSPERREV, static_cast<float>(encoderTicksPerRev[0]), 0);
-  retval      &= sendFloat(CMD_MOTOR_TICKSPERREV, static_cast<float>(encoderTicksPerRev[1]), 1);
+  bool retval = true;
+  if(_version.isValid()){
+    retval  = sendFloat(CMD_MOTOR_TICKSPERREV, static_cast<float>(encoderTicksPerRev[0]), 0);
+    retval &= sendFloat(CMD_MOTOR_TICKSPERREV, static_cast<float>(encoderTicksPerRev[1]), 1);
+  }else{
+    retval  = sendFloat(CMD_MOTOR_TICKSPERREV, static_cast<float>(encoderTicksPerRev[0]));
+  }
+
   if(retval){
     _params.motorParams[0].encoderRatio = encoderTicksPerRev[0];
     _params.motorParams[1].encoderRatio = encoderTicksPerRev[1];
   }
   return retval;
+}
+
+bool MotorController::setMaxRPM(double maxRPM[2])
+{
+  bool retval = true;
+  if(_version.isValid()){
+    retval  = sendFloat(CMD_MOTOR_SETRPMMAX, static_cast<float>(maxRPM[0]), 0);
+    retval &= sendFloat(CMD_MOTOR_SETRPMMAX, static_cast<float>(maxRPM[1]), 1);
+  }else{
+    retval  = sendFloat(CMD_MOTOR_SETRPMMAX, static_cast<float>(maxRPM[0]));
+  }
+
+  if(retval){
+    _params.motorParams[0].rpmMax = maxRPM[0];
+    _params.motorParams[1].rpmMax = maxRPM[1];
+  }
+  return retval;
+}
+
+double MotorController::getMaxRPM(size_t motor_num)
+{
+  return _params.motorParams[motor_num].rpmMax;
 }
 
 bool MotorController::setFrequencyScale(unsigned short scale)
@@ -323,21 +371,6 @@ unsigned short MotorController::getFrequencyScale()
   return _params.frequencyScale;
 }
 
-bool MotorController::setMaxPulseWidth(unsigned char pulse)
-{
-  bool retval = false;
-
-  if(pulse<=127)
-  {
-    _cf.can_dlc = 2;
-    _cf.data[0] = CMD_MOTOR_SETPWMMAX;
-    _cf.data[1] = pulse;
-    retval = _can->send(&_cf);
-  }
-  if(retval)
-    _params.maxPulseWidth = pulse;
-  return retval;
-}
 
 bool MotorController::setPWM(int pwm[2])
 {
@@ -361,8 +394,8 @@ bool MotorController::setRPM(double rpm[2])
 {
   _cf.can_dlc = 5;
 
-  int vel1 = (int)(rpm[0]*100.0);
-  int vel2 = (int)(rpm[1]*100.0);
+  int vel1 = (int)(rpm[0] * FIXED_POINT_FACTOR);
+  int vel2 = (int)(rpm[1] * FIXED_POINT_FACTOR);
 
   _cf.data[0] = CMD_MOTOR_SETRPM;
   _cf.data[1] = (char)(vel1 >> 8) & 0xFF;
@@ -376,7 +409,7 @@ bool MotorController::setRPM(double rpm[2])
 void MotorController::getWheelResponse(double response[2])
 {
   LockGuard guard(_stateMutex);
-  if(_params.responseMode == CAN_RESPONSE_RPM)
+  if(_params.responseMode == CanResponseMode::Rpm)
   {
     response[0] = _rpm[0];
     response[1] = _rpm[1];
@@ -498,8 +531,8 @@ void MotorController::notify(struct can_frame* frame)
     
       short val1 = (frame->data[1] << 8 | (frame->data[2]));
       short val2 = (frame->data[3] << 8 | (frame->data[4]));
-      _rpm[0] = static_cast<double>(val1) / 100.0;
-      _rpm[1] = static_cast<double>(val2) / 100.0;
+      _rpm[0] = static_cast<double>(val1) / FIXED_POINT_FACTOR;
+      _rpm[1] = static_cast<double>(val2) / FIXED_POINT_FACTOR;
       _pos[0] = 0.f;
       _pos[1] = 0.f;
     }

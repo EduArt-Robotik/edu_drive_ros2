@@ -19,7 +19,6 @@ int main(int argc, char *argv[])
    edu_drive->declare_parameter("canInterface",              std::string("can0"));
    edu_drive->declare_parameter("frequencyScale",            32);
    edu_drive->declare_parameter("inputWeight",               0.8);
-   edu_drive->declare_parameter("maxPulseWidth",             50);
    edu_drive->declare_parameter("timeout",                   300);
    edu_drive->declare_parameter("verbosity",                 false);
 
@@ -27,10 +26,34 @@ int main(int argc, char *argv[])
    auto canInterface   = edu_drive->get_parameter("canInterface").as_string();
    auto frequencyScale = edu_drive->get_parameter("frequencyScale").as_int();
    auto inputWeight    = edu_drive->get_parameter("inputWeight").as_double();
-   auto maxPulseWidth  = edu_drive->get_parameter("maxPulseWidth").as_int();
    auto timeout        = edu_drive->get_parameter("timeout").as_int();
    auto verbosity      = edu_drive->get_parameter("verbosity").as_bool();
 
+   edu_drive->declare_parameter("joy.buttons.enable", 10);
+   edu_drive->declare_parameter("joy.buttons.disable", 9);
+   edu_drive->declare_parameter("joy.buttons.omniMode", 11);
+   edu_drive->declare_parameter("joy.buttons.servoLeft", 2);
+   edu_drive->declare_parameter("joy.buttons.servoRight", 3);
+   edu_drive->declare_parameter("joy.axes.forward", 1);
+   edu_drive->declare_parameter("joy.axes.left", 0);
+   edu_drive->declare_parameter("joy.axes.turn", 2);
+   edu_drive->declare_parameter("joy.axes.throttle", 3);
+   edu_drive->declare_parameter("joy.axes.fineAdjust", 4);
+   edu_drive->declare_parameter("joy.config.omniModeLatching", true);
+
+   edu::JoystickInputHandler::JoystickMap joyMap;
+   joyMap.buttons.enable     = edu_drive->get_parameter("joy.buttons.enable").as_int();
+   joyMap.buttons.disable    = edu_drive->get_parameter("joy.buttons.disable").as_int();
+   joyMap.buttons.omniMode   = edu_drive->get_parameter("joy.buttons.omniMode").as_int();
+   joyMap.buttons.servoLeft  = edu_drive->get_parameter("joy.buttons.servoLeft").as_int();
+   joyMap.buttons.servoRight = edu_drive->get_parameter("joy.buttons.servoRight").as_int();
+   joyMap.axes.forward       = edu_drive->get_parameter("joy.axes.forward").as_int();
+   joyMap.axes.left          = edu_drive->get_parameter("joy.axes.left").as_int();
+   joyMap.axes.turn          = edu_drive->get_parameter("joy.axes.turn").as_int();
+   joyMap.axes.throttle      = edu_drive->get_parameter("joy.axes.throttle").as_int();
+   joyMap.axes.fineAdjust    = edu_drive->get_parameter("joy.axes.fineAdjust").as_int();
+   joyMap.config.omniModeLatching = edu_drive->get_parameter("joy.config.omniModeLatching").as_bool();
+   
    // Ensure a proper range for the timeout value
    // A lag more than a second should not be tolerated
    if (timeout < 0 || timeout > 1000)
@@ -63,7 +86,6 @@ int main(int argc, char *argv[])
 
       cp.frequencyScale = frequencyScale;
       cp.inputWeight    = inputWeight;
-      cp.maxPulseWidth  = maxPulseWidth;
       cp.timeout        = timeout;
       cp.kp             = kp;
       cp.ki             = ki;
@@ -74,7 +96,7 @@ int main(int argc, char *argv[])
       edu_drive->declare_parameter(controllerID + std::string(".canID"), 0);
 
       cp.canID          = edu_drive->get_parameter(controllerID + std::string(".canID")).as_int();
-      cp.responseMode   = (responseMode==0 ? edu::CAN_RESPONSE_RPM : edu::CAN_RESPONSE_POS);
+      cp.responseMode   = (responseMode==0 ? edu::CanResponseMode::Rpm : edu::CanResponseMode::Pos);
 
       // --- Motor parameters ---------
       for(int d=0; d<2; d++)
@@ -106,7 +128,7 @@ int main(int argc, char *argv[])
    }
       
    RCLCPP_INFO_STREAM(edu_drive->get_logger(), "CAN Interface: " << canInterface << " opened");
-   edu_drive->initDrive(controllerParams, can, usingPwrMgmt, verbosity);
+   edu_drive->initDrive(controllerParams, can, joyMap, usingPwrMgmt, verbosity);
    edu_drive->run();
    }
    catch (const std::exception& e)

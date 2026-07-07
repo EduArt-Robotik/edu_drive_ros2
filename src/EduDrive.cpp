@@ -1,5 +1,6 @@
 #include "EduDrive.h"
 
+#include <cmath>
 #include <fcntl.h>
 #include <sys/ioctl.h>
 #include <linux/gpio.h>
@@ -20,33 +21,12 @@ EduDrive::~EduDrive()
    
 }
 
-void EduDrive::initDrive(std::vector<ControllerParams> cp, std::shared_ptr<SocketCAN> can, bool using_pwr_mgmt, bool verbosity)
+void EduDrive::initDrive(std::vector<ControllerParams> cp, std::shared_ptr<SocketCAN> can, const JoystickInputHandler::JoystickMap& joyMap, bool using_pwr_mgmt, bool verbosity)
 {
     _can = can;
-
     _using_pwr_mgmt = using_pwr_mgmt;
     _verbosity = verbosity;
     _enabled = false;
-    
-    _subJoy     = this->create_subscription<sensor_msgs::msg::Joy>("joy", 1, std::bind(&EduDrive::joyCallback, this, std::placeholders::_1));
-    _subVel     = this->create_subscription<geometry_msgs::msg::Twist>("vel/teleop", 10, std::bind(&EduDrive::velocityCallback, this, std::placeholders::_1));
-    _srvEnable  = this->create_service<std_srvs::srv::SetBool>("enable", std::bind(&EduDrive::enableCallback, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
-
-    // Publisher of motor shields
-    _pubEnabled = this->create_publisher<std_msgs::msg::ByteMultiArray>("enabled", 1);
-    _pubRPM     = this->create_publisher<std_msgs::msg::Float32MultiArray>("rpm", 1);
-
-    // Publisher of carrier shield
-    _pubTemp             = this->create_publisher<std_msgs::msg::Float32>("temperature", 1);
-    _pubVoltageAdapter   = this->create_publisher<std_msgs::msg::Float32>("voltageAdapter", 1);
-    _pubImu              = this->create_publisher<sensor_msgs::msg::Imu>("imu", 1);
-    
-    // Publisher of power management shield
-    _pubVoltagePwrMgmt = this->create_publisher<std_msgs::msg::Float32>("voltagePwrMgmt", 1);
-    _pubCurrentPwrMgmt = this->create_publisher<std_msgs::msg::Float32>("currentPwrMgmt", 1);
-
-    // Broadcaster for odometry data
-    _tf_broadcaster = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
 
     // CAN devices
     _adapter   = std::make_unique<RPiAdapterBoard>(can.get(), verbosity);
@@ -57,13 +37,11 @@ void EduDrive::initDrive(std::vector<ControllerParams> cp, std::shared_ptr<Socke
     _omegaMax = 0.0;
 
     bool isKinematicsValid = true;
-    for (unsigned int i = 0; i < cp.size(); ++i)
-    {
-        std::vector<MotorParams> motorParams = cp[i].motorParams;
 
-        for (unsigned int j = 0; j < motorParams.size(); ++j)
+    for(const auto& controllerParams : cp){
+      for (const auto& motorParam : controllerParams.motorParams)
         {
-            isKinematicsValid &= (motorParams[j].kinematics.size()==3);
+            isKinematicsValid &= (motorParam.kinematics.size()==KINEMATIC_VECTOR_SIZE);
         }
     }
 
@@ -84,22 +62,48 @@ void EduDrive::initDrive(std::vector<ControllerParams> cp, std::shared_ptr<Socke
             kinematicModel.push_back(kinematics);
             double kx = kinematics[0];
             double kw = kinematics[2];
-            double rpmMax = std::min(cp[i].motorParams[0].rpmMax, cp[i].motorParams[1].rpmMax); // the slowest motor determines the maximum speed of the system
-            if(fabs(kx)>1e-3)
+            double rpmMax = cp[i].motorParams[0].rpmMax;
+            for (unsigned int k = 1; k < MOTOR_CHANNELS; ++k)
+                rpmMax = std::min(rpmMax, cp[i].motorParams[k].rpmMax); // the slowest motor determines the maximum speed of the system
+            if(std::fabs(kx)>1e-3)
             {
-                double vMax = fabs(rpmMax * RPM2RADS / kx);
+                double vMax = std::fabs(rpmMax * RPM2RADS / kx);
                 if(vMax > _vMax) _vMax = vMax;
             }
-            if(fabs(kw)>1e-3)
+            if(std::fabs(kw)>1e-3)
             {
-                double omegaMax = fabs(rpmMax * RPM2RADS / kw);
+                double omegaMax = std::fabs(rpmMax * RPM2RADS / kw);
                 if(omegaMax > _omegaMax) _omegaMax = omegaMax;
                 }
         }
     }
+
     edu::Matrix K(kinematicModel);
     edu::Matrix Kinv = K.pseudoInverse();
-    _odometry = std::make_unique<Odometry>(ODOMETRY_ABSOLUTE_MODE, Kinv);
+    _odometry = std::make_unique<Odometry>(edu::OdometryMode::Absolute, Kinv);
+    _joystickInput = std::make_unique<JoystickInputHandler>(joyMap, _vMax, _omegaMax);
+
+    // Publisher of motor shields
+    _pubEnabled = this->create_publisher<std_msgs::msg::ByteMultiArray>("enabled", 1);
+    _pubRPM     = this->create_publisher<std_msgs::msg::Float32MultiArray>("rpm", 1);
+
+    // Publisher of carrier shield
+    _pubTemp             = this->create_publisher<std_msgs::msg::Float32>("temperature", 1);
+    _pubVoltageAdapter   = this->create_publisher<std_msgs::msg::Float32>("voltageAdapter", 1);
+    _pubImu              = this->create_publisher<sensor_msgs::msg::Imu>("imu", 1);
+    
+    // Publisher of power management shield
+    _pubVoltagePwrMgmt = this->create_publisher<std_msgs::msg::Float32>("voltagePwrMgmt", 1);
+    _pubCurrentPwrMgmt = this->create_publisher<std_msgs::msg::Float32>("currentPwrMgmt", 1);
+
+    // Broadcaster for odometry data
+    _tf_broadcaster = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
+
+    // Subscribers last after everything else is initialized, to avoid receiving messages before the robot is ready
+    _subJoy     = this->create_subscription<sensor_msgs::msg::Joy>("joy", 1, std::bind(&EduDrive::joyCallback, this, std::placeholders::_1));
+    _subVel     = this->create_subscription<geometry_msgs::msg::Twist>("vel/teleop", 10, std::bind(&EduDrive::velocityCallback, this, std::placeholders::_1));
+    _srvEnable  = this->create_service<std_srvs::srv::SetBool>("enable", std::bind(&EduDrive::enableCallback, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
+    _srvResetOdometry = this->create_service<std_srvs::srv::SetBool>("reset_odometry", std::bind(&EduDrive::resetOdometryCallback, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
     
     RCLCPP_INFO_STREAM(this->get_logger(), "Instantiated robot with vMax: " << _vMax << " m/s and omegaMax: " << _omegaMax << " rad/s");
 }
@@ -157,50 +161,15 @@ void EduDrive::disable()
 
 void EduDrive::joyCallback(const sensor_msgs::msg::Joy::SharedPtr joy)
 {
-    auto axis = [&](size_t idx, double fallback = 0.0) -> double
-    {
-        return (idx < joy->axes.size()) ? joy->axes[idx] : fallback;
-    };
-    auto button = [&](size_t idx) -> int32_t
-    {
-        return (idx < joy->buttons.size()) ? joy->buttons[idx] : 0;
-    };
+    if (!_joystickInput)
+        return;
 
-    // Assignment of joystick axes to motor commands
-    double fwd      = axis(1);              // Range of values [-1:1]
-    double left     = axis(0);              // Range of values [-1:1]
-    double turn     = axis(2);              // Range of values [-1:1]
-    double throttle = (axis(3, -1.0) + 1.0) / 2.0; // Range of values  [0:1]
+    const auto now = this->get_clock()->now();
+    const auto input = _joystickInput->process(joy, _servoPos);
 
-    // Enable movement in the direction of the y-axis only when the button 12 is pressed
-    if (!button(11))
-        left = 0;
-
-    // Forward / Backward basic orientation
-    double servoPos = _servoPos;
-    if(button(2))
+    if(input.servoChanged)
     {
-        _servoPos = 45.0;
-    }
-    else if(button(3))
-    {
-        _servoPos = 225.0;
-    }
-
-    // Coolie hat fine positioning
-    if(axis(4) == 1.0)
-        _servoPos += 1.0;
-    if(axis(4) == -1.0)
-        _servoPos -= 1.0;
-    
-    if(_servoPos < 0.0)
-        _servoPos = 0.0;
-    if(_servoPos > 270.0)
-        _servoPos = 270.0;
-
-    // Avoid sending CAN messages, if servos keep their position
-    if(servoPos != _servoPos)
-    {
+        _servoPos = input.servoPos;
         double angles[8];
         angles[0] = _servoPos;
         angles[1] = _servoPos;
@@ -212,32 +181,34 @@ void EduDrive::joyCallback(const sensor_msgs::msg::Joy::SharedPtr joy)
         angles[6] = 275;
         angles[7] = 275;
         _extension->setServos(angles);
-}
-    static int32_t btn9Prev  = button(9);
-    static int32_t btn10Prev = button(10);
+    }
 
-    if (button(9) && !btn9Prev)
+    if (input.requestDisable)
     {
         disable();
     }
-    else if (button(10) && !btn10Prev)
+    else if (input.requestEnable)
     {
         enable();
     }
 
-    btn9Prev    = button(9);
-    btn10Prev   = button(10);
-
-    double vFwd  = throttle * fwd  * _vMax;
-    double vLeft = throttle * left * _vMax;
-    double omega = throttle * turn * _omegaMax;
-
-    controlMotors(vFwd, vLeft, omega);
+    _commandMultiplexer.updateJoystick(input.command, now);
+    const auto selected = _commandMultiplexer.select(now);
+    controlMotors(selected.command.vFwd, selected.command.vLeft, selected.command.omega);
 }
 
 void EduDrive::velocityCallback(const geometry_msgs::msg::Twist::SharedPtr cmd)
 {
-    controlMotors(cmd->linear.x, cmd->linear.y, cmd->angular.z);
+    const auto now = this->get_clock()->now();
+
+    DriveCommand command;
+    command.vFwd = cmd->linear.x;
+    command.vLeft = cmd->linear.y;
+    command.omega = cmd->angular.z;
+
+    _commandMultiplexer.updateVelocity(command, now);
+    const auto selected = _commandMultiplexer.select(now);
+    controlMotors(selected.command.vFwd, selected.command.vLeft, selected.command.omega);
 }
 
 bool EduDrive::enableCallback(const std::shared_ptr<rmw_request_id_t> header, const std::shared_ptr<std_srvs::srv::SetBool_Request> request, const std::shared_ptr<std_srvs::srv::SetBool_Response> response)
@@ -259,44 +230,65 @@ bool EduDrive::enableCallback(const std::shared_ptr<rmw_request_id_t> header, co
     return true;
 }
 
+bool EduDrive::resetOdometryCallback(const std::shared_ptr<rmw_request_id_t> header, const std::shared_ptr<std_srvs::srv::SetBool_Request> request, const std::shared_ptr<std_srvs::srv::SetBool_Response> response)
+{
+    // suppress warning about unused variable header
+    (void)header;
+
+    if(!request->data)
+    {
+        response->success = false;
+        response->message = "Set data=true to reset odometry";
+        return true;
+    }
+
+    if(!_odometry)
+    {
+        response->success = false;
+        response->message = "Odometry is not initialized";
+        return true;
+    }
+
+    _odometry->reset();
+    RCLCPP_INFO(this->get_logger(), "%s", "Odometry reset");
+
+    response->success = true;
+    response->message = "Odometry reset";
+    return true;
+}
+
 void EduDrive::controlMotors(double vFwd, double vLeft, double omega)
 {
     if (_mc.empty()) return;
 
     _lastCmd = this->get_clock()->now();
 
-    std::vector<std::array<double, 2>> motors(_mc.size());
+    std::vector<std::array<double, MOTOR_CHANNELS>> motors(_mc.size());
     double scale = 1.0;
 
     // scale velocities relative to the slowest motor of the system
     for (unsigned int i = 0; i < _mc.size(); ++i)
     {
-        const auto& rpmMax0 = _mc[i]->getMotorParams()[0].rpmMax;
-        const auto& rpmMax1 = _mc[i]->getMotorParams()[1].rpmMax;
-        const auto& kin0 = _mc[i]->getMotorParams()[0].kinematics;
-        const auto& kin1 = _mc[i]->getMotorParams()[1].kinematics;
+      for(unsigned int j = 0; j < MOTOR_CHANNELS; ++j){
 
-        motors[i][0] = kin0[0] * vFwd + kin0[1] * vLeft + kin0[2] * omega;
-        motors[i][1] = kin1[0] * vFwd + kin1[1] * vLeft + kin1[2] * omega;
+        const auto& rpmMax = _mc[i]->getMotorParams()[j].rpmMax;
+        const auto& kin = _mc[i]->getMotorParams()[j].kinematics;
 
-        const double rpmMaxRad0 = rpmMax0 * RPM2RADS;
-        const double rpmMaxRad1 = rpmMax1 * RPM2RADS;
+        motors[i][j] = kin[0] * vFwd + kin[1] * vLeft + kin[2] * omega;
+        motors[i][j] *= RADS2RPM;
 
-        if (std::abs(motors[i][0]) > rpmMaxRad0) {
-            scale = std::min(scale, rpmMaxRad0 / std::abs(motors[i][0]));
+        if (std::abs(motors[i][j]) > rpmMax) {
+            scale = std::min(scale, rpmMax / std::abs(motors[i][j]));
         }
-        if (std::abs(motors[i][1]) > rpmMaxRad1) {
-            scale = std::min(scale, rpmMaxRad1 / std::abs(motors[i][1]));
-        }
+      }
     }
 
     // apply scale factor to all motors
     for (unsigned int i = 0; i < _mc.size(); ++i)
     {
-        double w[2] = {
-            motors[i][0] * scale * RADS2RPM,
-            motors[i][1] * scale * RADS2RPM
-        };
+        double w[MOTOR_CHANNELS];
+        for (unsigned int j = 0; j < MOTOR_CHANNELS; ++j)
+            w[j] = motors[i][j] * scale;
         _mc[i]->setRPM(w);
 
         if (_verbosity)
@@ -312,8 +304,6 @@ void EduDrive::hardwareWorker()
     std_msgs::msg::Float32MultiArray msgRPM;
     std_msgs::msg::ByteMultiArray msgEnabled;
     geometry_msgs::msg::TransformStamped msgTransform;
-    edu::Vec rpmForOdometry;
-    rpmForOdometry.reserve(_mc.size() * 2);
 
     bool controllersInitialized = true;
     for (auto& mc : _mc)
@@ -323,7 +313,7 @@ void EduDrive::hardwareWorker()
 
     for (auto& mc : _mc)
     {
-        double response[2] = {0.0, 0.0};
+        double response[MOTOR_CHANNELS] = {};
         bool enableState = false;
         if(controllersInitialized)
         {
@@ -347,14 +337,11 @@ void EduDrive::hardwareWorker()
                 disable();
             }
         }
-        msgRPM.data.push_back(static_cast<float>(response[0]));
-        msgRPM.data.push_back(static_cast<float>(response[1]));
-        rpmForOdometry.push_back(response[0]);
-        rpmForOdometry.push_back(response[1]);
+        for (unsigned int j = 0; j < MOTOR_CHANNELS; ++j) {
+            msgRPM.data.push_back(static_cast<float>(response[j]));
+        }
         msgEnabled.data.push_back(enableState);
     }
-
-    rclcpp::Time stampReceived = this->get_clock()->now();
 
     _enabled = false;
     if(msgEnabled.data.size()>0)
@@ -367,7 +354,8 @@ void EduDrive::hardwareWorker()
         _extension->sendEnabledState(_enabled);
     }
 
-    _odometry->update(static_cast<std::uint64_t>(stampReceived.nanoseconds()), rpmForOdometry);
+    rclcpp::Time stampReceived = this->get_clock()->now();
+    _odometry->update(stampReceived.nanoseconds(), edu::Vec(msgRPM.data.begin(), msgRPM.data.end()));
     
     Pose pose = _odometry->get_pose();
     msgTransform.header.stamp = stampReceived;
@@ -444,7 +432,7 @@ int EduDrive::gpio_write(const char *dev_name, int offset, int value)
     fd = open(dev_name, O_RDONLY);
     if (fd < 0)
     {
-        RCLCPP_WARN_STREAM(this->get_logger(), "Unabled to open " << dev_name << ": " << strerror(errno) << std::endl);
+        RCLCPP_WARN_STREAM(this->get_logger(), "Unable to open " << dev_name << ": " << strerror(errno) << std::endl);
         return -1;
     }
     rq.lineoffsets[0] = offset;
@@ -479,7 +467,7 @@ int EduDrive::gpio_read(const char *dev_name, int offset, int &value)
     fd = open(dev_name, O_RDONLY);
     if (fd < 0)
     {
-            RCLCPP_WARN_STREAM(this->get_logger(), "Unabled to open " << dev_name << ", " << strerror(errno) << std::endl);
+            RCLCPP_WARN_STREAM(this->get_logger(), "Unable to open " << dev_name << ", " << strerror(errno) << std::endl);
         return -1;
     }
     rq.lineoffsets[0] = offset;
