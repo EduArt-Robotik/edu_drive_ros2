@@ -275,8 +275,13 @@ unsigned short MotorController::getTimeout()
 
 bool MotorController::setGearRatio(double gearRatio[2])
 {
-  bool retval  = sendFloat(CMD_MOTOR_GEARRATIO, static_cast<float>(gearRatio[0]), 0);
-  retval      &= sendFloat(CMD_MOTOR_GEARRATIO, static_cast<float>(gearRatio[1]), 1);
+  bool retval = true;
+  if(_version.isValid()){
+    retval  = sendFloat(CMD_MOTOR_GEARRATIO, static_cast<float>(gearRatio[0]), 0);
+    retval &= sendFloat(CMD_MOTOR_GEARRATIO, static_cast<float>(gearRatio[1]), 1);
+  }else{
+    retval  = sendFloat(CMD_MOTOR_GEARRATIO, static_cast<float>(gearRatio[0]));
+  }
 
   if(retval){
     _params.motorParams[0].gearRatio = gearRatio[0];
@@ -292,8 +297,14 @@ double MotorController::getGearRatio(size_t motor_num)
 
 bool MotorController::setEncoderTicksPerRev(double encoderTicksPerRev[2])
 {
-  bool retval  = sendFloat(CMD_MOTOR_TICKSPERREV, static_cast<float>(encoderTicksPerRev[0]), 0);
-  retval      &= sendFloat(CMD_MOTOR_TICKSPERREV, static_cast<float>(encoderTicksPerRev[1]), 1);
+  bool retval = true;
+  if(_version.isValid()){
+    retval  = sendFloat(CMD_MOTOR_TICKSPERREV, static_cast<float>(encoderTicksPerRev[0]), 0);
+    retval &= sendFloat(CMD_MOTOR_TICKSPERREV, static_cast<float>(encoderTicksPerRev[1]), 1);
+  }else{
+    retval  = sendFloat(CMD_MOTOR_TICKSPERREV, static_cast<float>(encoderTicksPerRev[0]));
+  }
+
   if(retval){
     _params.motorParams[0].encoderRatio = encoderTicksPerRev[0];
     _params.motorParams[1].encoderRatio = encoderTicksPerRev[1];
