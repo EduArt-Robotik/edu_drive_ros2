@@ -274,11 +274,10 @@ void EduDrive::controlMotors(double vFwd, double vLeft, double omega)
         const auto& kin = _mc[i]->getMotorParams()[j].kinematics;
 
         motors[i][j] = kin[0] * vFwd + kin[1] * vLeft + kin[2] * omega;
+        motors[i][j] *= RADS2RPM;
 
-        const double rpmMaxRad = rpmMax * RPM2RADS;
-
-        if (std::abs(motors[i][j]) > rpmMaxRad) {
-            scale = std::min(scale, rpmMaxRad / std::abs(motors[i][j]));
+        if (std::abs(motors[i][j]) > rpmMax) {
+            scale = std::min(scale, rpmMax / std::abs(motors[i][j]));
         }
       }
     }
@@ -288,7 +287,7 @@ void EduDrive::controlMotors(double vFwd, double vLeft, double omega)
     {
         double w[MOTOR_CHANNELS];
         for (unsigned int j = 0; j < MOTOR_CHANNELS; ++j)
-            w[j] = motors[i][j] * scale * RADS2RPM;
+            w[j] = motors[i][j] * scale;
         _mc[i]->setRPM(w);
 
         if (_verbosity)
