@@ -423,6 +423,8 @@ namespace edu
     using Mutex = std::mutex;
     using LockGuard = std::lock_guard<Mutex>;
 
+    static constexpr double  FIXED_POINT_FACTOR = 100.0;
+
     SocketCAN *_can;
 
     int32_t _inputAddress;

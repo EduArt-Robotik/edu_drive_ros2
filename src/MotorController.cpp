@@ -361,8 +361,8 @@ bool MotorController::setRPM(double rpm[2])
 {
   _cf.can_dlc = 5;
 
-  int vel1 = (int)(rpm[0]*100.0);
-  int vel2 = (int)(rpm[1]*100.0);
+  int vel1 = (int)(rpm[0] * FIXED_POINT_FACTOR);
+  int vel2 = (int)(rpm[1] * FIXED_POINT_FACTOR);
 
   _cf.data[0] = CMD_MOTOR_SETRPM;
   _cf.data[1] = (char)(vel1 >> 8) & 0xFF;
@@ -498,8 +498,8 @@ void MotorController::notify(struct can_frame* frame)
     
       short val1 = (frame->data[1] << 8 | (frame->data[2]));
       short val2 = (frame->data[3] << 8 | (frame->data[4]));
-      _rpm[0] = static_cast<double>(val1) / 100.0;
-      _rpm[1] = static_cast<double>(val2) / 100.0;
+      _rpm[0] = static_cast<double>(val1) / FIXED_POINT_FACTOR;
+      _rpm[1] = static_cast<double>(val2) / FIXED_POINT_FACTOR;
       _pos[0] = 0.f;
       _pos[1] = 0.f;
     }
