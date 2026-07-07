@@ -111,7 +111,7 @@ int Odometry::update(uint64_t time_ns, edu::Vec mot_vel_vec)
     if((_odometry_mode == edu::OdometryMode::Relative) || (_is_vel_init)){
 
         // In case absolute values are given, calculate the difference to previous time.
-        double dt_s = (_odometry_mode == ODOMETRY_ABSOLUTE_MODE)
+        double dt_s = (_odometry_mode == edu::OdometryMode::Absolute)
                 ? static_cast<double>(time_ns - _prev_time_ns) / 1e9
                 : static_cast<double>(time_ns) / 1e9;
 

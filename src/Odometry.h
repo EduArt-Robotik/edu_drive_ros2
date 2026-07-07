@@ -84,7 +84,7 @@ namespace edu
         /**
          * Update odometry estimation with new wheel speeds
          * Absolute time or change in time depends on odometry_mode setting
-         * @param[in] time_ns Time in nanoseconds
+         * @param[in] time_ns Time in nanoseconds. Either absolute time or change in time depending on the OdometryMode setting
          * @param[in] mot_vel_vec Vector of the motor velocities.
          * @retval status 1: o.k., status -1: error in last step (no update)
          */

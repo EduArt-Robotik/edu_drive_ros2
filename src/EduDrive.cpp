@@ -303,8 +303,6 @@ void EduDrive::hardwareWorker()
     std_msgs::msg::Float32MultiArray msgRPM;
     std_msgs::msg::ByteMultiArray msgEnabled;
     geometry_msgs::msg::TransformStamped msgTransform;
-    edu::Vec rpmForOdometry;
-    rpmForOdometry.reserve(_mc.size() * 2);
 
     bool controllersInitialized = true;
     for (auto& mc : _mc)
@@ -340,12 +338,9 @@ void EduDrive::hardwareWorker()
         }
         for (unsigned int j = 0; j < MOTOR_CHANNELS; ++j) {
             msgRPM.data.push_back(static_cast<float>(response[j]));
-            rpmForOdometry.push_back(response[j]);
         }
         msgEnabled.data.push_back(enableState);
     }
-
-    rclcpp::Time stampReceived = this->get_clock()->now();
 
     _enabled = false;
     if(msgEnabled.data.size()>0)
@@ -358,7 +353,8 @@ void EduDrive::hardwareWorker()
         _extension->sendEnabledState(_enabled);
     }
 
-    _odometry->update(static_cast<std::uint64_t>(stampReceived.nanoseconds()), rpmForOdometry);
+    rclcpp::Time stampReceived = this->get_clock()->now();
+    _odometry->update(stampReceived.nanoseconds(), edu::Vec(msgRPM.data.begin(), msgRPM.data.end()));
     
     Pose pose = _odometry->get_pose();
     msgTransform.header.stamp = stampReceived;
