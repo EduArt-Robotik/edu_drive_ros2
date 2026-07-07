@@ -244,11 +244,26 @@ bool MotorController::configureResponse(CanResponseMode mode)
 
 bool MotorController::invertEncoderPolarity(bool invert[2])
 {
-  _cf.can_dlc = 3;
-  _cf.data[0] = CMD_MOTOR_INVERTENC;
-  _cf.data[1] = (invert[0]) ? 1 : 0;
-  _cf.data[2] = (invert[1]) ? 1 : 0;
-  return _can->send(&_cf);
+  bool retval = true;
+
+  
+  if(_version.isValid()){
+    _cf.can_dlc = 3;
+    _cf.data[0] = CMD_MOTOR_INVERTENC;
+    _cf.data[1] = (invert[0]) ? 1 : 0;
+    _cf.data[2] = 0;
+    retval      = _can->send(&_cf);
+
+    _cf.data[1] = (invert[1]) ? 1 : 0;
+    _cf.data[2] = 1;
+    retval     &= _can->send(&_cf);
+  }else{
+    _cf.can_dlc = 2;
+    _cf.data[0] = CMD_MOTOR_INVERTENC;
+    _cf.data[1] = (invert[0]) ? 1 : 0;
+    retval      = _can->send(&_cf);
+  }
+  return retval;
 }
 
 unsigned short MotorController::getCanId()
