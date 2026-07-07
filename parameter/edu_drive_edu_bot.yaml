@@ -5,7 +5,6 @@
     canInterface: eduart-can2
     frequencyScale: 32
     inputWeight: 0.2
-    maxPulseWidth: 100
     timeout: 300
     kp: 0.5
     ki: 7.0
@@ -21,14 +20,14 @@
         channel: 0
         gearRatio: 89.0
         encoderRatio: 2048.0
-        rpmMax: 60.0
+        rpmMax: 80.0
         invertEnc: 1
         kinematics: [20.0, 20.0, 6.1]
       drive1: #rear right
         channel: 1
         gearRatio: 89.0
         encoderRatio: 2048.0
-        rpmMax: 60.0
+        rpmMax: 80.0
         invertEnc: 1
         kinematics: [20.0, -20.0, 6.1]
 
@@ -38,14 +37,14 @@
         channel: 0
         gearRatio: 89.0
         encoderRatio: 2048.0
-        rpmMax: 60.0
+        rpmMax: 80.0
         invertEnc: 1
         kinematics: [-20.0, 20.0, 6.1]
       drive1: #rear left
         channel: 1
         gearRatio: 89.0
         encoderRatio: 2048.0
-        rpmMax: 60.0
+        rpmMax: 80.0
         invertEnc: 1
         kinematics: [-20.0, -20.0, 6.1]
 

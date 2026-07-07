@@ -22,7 +22,6 @@ MotorController::MotorController(SocketCAN* can, ControllerParams params, bool v
   std::cout << "---------------------------" << std::endl << std::endl;
   std::cout << "frequencyScale = " << params.frequencyScale << std::endl;
   std::cout << "inputWeight    = " << params.inputWeight << std::endl;
-  std::cout << "maxPulseWidth  = " << (int)params.maxPulseWidth << std::endl;
   std::cout << "timeout        = " << params.timeout << std::endl;
 
   std::cout << "kp             = " << params.kp << std::endl;
@@ -107,9 +106,10 @@ void MotorController::init()
     retval = false;
   }
   
-  if(!setMaxPulseWidth(_params.maxPulseWidth))
+  double rpmMax[] = {_params.motorParams[0].rpmMax, _params.motorParams[1].rpmMax};
+  if(!setMaxRPM(rpmMax))
   {
-    RCLCPP_ERROR_STREAM(rclcpp::get_logger("MotorController"), "#MotorController Setting maximum pulse width failed for device " << _params.canID << std::endl);
+    RCLCPP_ERROR_STREAM(rclcpp::get_logger("MotorController"), "#MotorController Setting maximum RPM failed for device " << _params.canID << std::endl);
     retval = false;
   }
 
@@ -312,6 +312,28 @@ bool MotorController::setEncoderTicksPerRev(double encoderTicksPerRev[2])
   return retval;
 }
 
+bool MotorController::setMaxRPM(double maxRPM[2])
+{
+  bool retval = true;
+  if(_version.isValid()){
+    retval  = sendFloat(CMD_MOTOR_SETRPMMAX, static_cast<float>(maxRPM[0]), 0);
+    retval &= sendFloat(CMD_MOTOR_SETRPMMAX, static_cast<float>(maxRPM[1]), 1);
+  }else{
+    retval  = sendFloat(CMD_MOTOR_SETRPMMAX, static_cast<float>(maxRPM[0]));
+  }
+
+  if(retval){
+    _params.motorParams[0].rpmMax = maxRPM[0];
+    _params.motorParams[1].rpmMax = maxRPM[1];
+  }
+  return retval;
+}
+
+double MotorController::getMaxRPM(size_t motor_num)
+{
+  return _params.motorParams[motor_num].rpmMax;
+}
+
 bool MotorController::setFrequencyScale(unsigned short scale)
 {
   bool retval = false;
@@ -334,21 +356,6 @@ unsigned short MotorController::getFrequencyScale()
   return _params.frequencyScale;
 }
 
-bool MotorController::setMaxPulseWidth(unsigned char pulse)
-{
-  bool retval = false;
-
-  if(pulse<=127)
-  {
-    _cf.can_dlc = 2;
-    _cf.data[0] = CMD_MOTOR_SETPWMMAX;
-    _cf.data[1] = pulse;
-    retval = _can->send(&_cf);
-  }
-  if(retval)
-    _params.maxPulseWidth = pulse;
-  return retval;
-}
 
 bool MotorController::setPWM(int pwm[2])
 {

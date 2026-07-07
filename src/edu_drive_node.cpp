@@ -15,7 +15,6 @@ int main(int argc, char *argv[])
    edu_drive->declare_parameter("canInterface",              std::string("can0"));
    edu_drive->declare_parameter("frequencyScale",            32);
    edu_drive->declare_parameter("inputWeight",               0.8);
-   edu_drive->declare_parameter("maxPulseWidth",             50);
    edu_drive->declare_parameter("timeout",                   300);
    edu_drive->declare_parameter("verbosity",                 false);
 
@@ -23,7 +22,6 @@ int main(int argc, char *argv[])
    auto canInterface   = edu_drive->get_parameter("canInterface").as_string();
    auto frequencyScale = edu_drive->get_parameter("frequencyScale").as_int();
    auto inputWeight    = edu_drive->get_parameter("inputWeight").as_double();
-   auto maxPulseWidth  = edu_drive->get_parameter("maxPulseWidth").as_int();
    auto timeout        = edu_drive->get_parameter("timeout").as_int();
    auto verbosity      = edu_drive->get_parameter("verbosity").as_bool();
 
@@ -84,7 +82,6 @@ int main(int argc, char *argv[])
 
       cp.frequencyScale = frequencyScale;
       cp.inputWeight    = inputWeight;
-      cp.maxPulseWidth  = maxPulseWidth;
       cp.timeout        = timeout;
       cp.kp             = kp;
       cp.ki             = ki;

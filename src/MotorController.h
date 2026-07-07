@@ -90,7 +90,6 @@ namespace edu
     // Control parameters
     unsigned short frequencyScale;
     double inputWeight;
-    unsigned char maxPulseWidth;
     unsigned short timeout;
     double kp;
     double ki;
@@ -108,7 +107,6 @@ namespace edu
       canID = 0;
       frequencyScale = 32;
       inputWeight = 0.8;
-      maxPulseWidth = 50;
       timeout = 300;
       kp = 0.0;
       ki = 0.0;
@@ -133,7 +131,6 @@ namespace edu
       canID = p.canID;
       frequencyScale = p.frequencyScale;
       inputWeight = p.inputWeight;
-      maxPulseWidth = p.maxPulseWidth;
       timeout = p.timeout;
       kp = p.kp;
       ki = p.ki;
@@ -274,6 +271,19 @@ namespace edu
     double getEncoderTicksPerRev(size_t motor_num);
 
     /**
+     * Set maximum revolutions per minute for the motors
+     * @param[in] maxRPM maximum revolutions per minute for motor 1 and 2 separately
+     * @return true==successful CAN transmission
+     */
+    bool setMaxRPM(double maxRPM[2]);
+
+    /**
+     * Accessor to maximum revolutions per minute parameter
+     * @return maximum revolutions per minute for motor 1 and 2
+     */
+    double getMaxRPM(size_t motor_num);
+
+    /**
      * Set scaling parameter for PWM frequency. The base frequency is 500kHz, of which one can apply a fractional amount, e.g.
      * 10 => 50kHz
      * 20 => 25kHz
@@ -288,15 +298,6 @@ namespace edu
      * @return scale denominator d of term 1/d x 500kHz
      */
     unsigned short getFrequencyScale();
-
-    /**
-     * The PWM signal can be adjusted in the range from [-127;127] which is equal to [-100%;100%].
-     * To limit the possible output, one can set a different value between [0;127],
-     * which is symmetrically applied to the positive and negative area, e.g. 32 => [-25%;25%]
-     * The default value is: 63 => [-50%;50%]
-     * @param[in] pulse pulse width limit in range of [-127;127]
-     */
-    bool setMaxPulseWidth(unsigned char pulse);
 
     /**
      * Accessor to pulse width limit, see mutator for details.

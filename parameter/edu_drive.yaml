@@ -5,7 +5,6 @@
     canInterface: CAN2
     frequencyScale: 32
     inputWeight: 0.2
-    maxPulseWidth: 100
     timeout: 300
     kp: 0.4
     ki: 4.0
