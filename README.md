@@ -4,7 +4,7 @@ It covers several kinematic concepts: Differential drive, Mecanum steering and S
 All three can be used in dependency of the mounted wheels and the configuration of YAML parameters.
 
 <p align="center">
-  <img src="/images/Prototype_yellow.jpg" width="90%"/>
+  <img src="images/Prototype_yellow.jpg" width="90%"/>
   <br><em>Fig.: Robot prototype using the Free Kinematic Kit.</em>
 </p>
 
@@ -19,6 +19,7 @@ All three can be used in dependency of the mounted wheels and the configuration 
   - [What do I need to build my own EduArt robot?](#what-do-i-need-to-build-my-own-eduart-robot)
   - [Make your robot wireless](#make-your-robot-wireless)
 - [Troubleshooting](#troubleshooting)
+  - [Debugging the ROS Node](#debugging-the-ros-node)
   - [🚫 The robot does not drive](#-the-robot-does-not-drive)
   - [🚫 Wheels rotate at full speed and don't respond to velocity commands](#-wheels-rotate-at-full-speed-and-dont-respond-to-velocity-commands)
   - [🚫 Wheels rotate in the wrong direction](#-wheels-rotate-in-the-wrong-direction)
@@ -271,7 +272,7 @@ ros2 launch edu_drive_ros2 edu_drive.launch.py
 The Free Kinematics Kit from EduArt gives you all the freedom you need to build your own robot with few restrictions on the mechanical design.
 
 <p align="center">
-  <img src="/images/Free_Kinematics_Kit_1920.jpg" width="80%"/>
+  <img src="images/Free_Kinematics_Kit_1920.jpg" width="80%"/>
   <br><em>Fig.: Kinematic Kit in two different variants, with Ethernet Gateway or as plug-in solution for a Raspberry Pi 5.</em>
 </p>
 
@@ -297,12 +298,12 @@ It consists of the following components, which can all be plugged together:
   In addition, 8 model servos can be connected to the *Extension Shield*.
 
 <p align="center"  width="100%">
-  <img width="80%" src="/images/extend_kinematic_kit.jpg"/>
+  <img width="80%" src="images/extend_kinematic_kit.jpg"/>
   <br><em>Fig.: Extend Kinematic Kit with Extension shield</em>
 </p>
 
 <p align="center"  width="100%">
-  <img src="/images/PowerManagement.jpg" width="80%"/>
+  <img src="images/PowerManagement.jpg" width="80%"/>
   <br><em>Fig.: Top view of power management module. Above the white Control Socket there is a two-pole socket for powering the Extension Shield.</em>
 </p>
 
@@ -336,7 +337,7 @@ Viewed from above, the red line is on the "left."
 <br>
 The signals of the other connectors are shown below.
 <p align="center">
-  <img src="/images/Free_Kinematics_Kit_Electrical_Interface_Desc_1920.jpg" width="80%"/>
+  <img src="images/Free_Kinematics_Kit_Electrical_Interface_Desc_1920.jpg" width="80%"/>
   <br><em>Fig.: Signal assignment of the white Control Socket and the Auxiliary Power Supply Module.</em>
 </p>
 
@@ -344,7 +345,7 @@ In addition to the interface of the power supply shield the pinout of the motorc
 Motors can be either connected on the 2x3 box header or on the 1x6 pin header.
 
 <p align="center">
-  <img src="/images/Motorcontroller.jpg" width="80%"/>
+  <img src="images/Motorcontroller.jpg" width="80%"/>
 </p>
 
 When using a generic motor with the EduArt motorcontroller boards the motor has to be wired correctly to match the above pinout description.
@@ -353,7 +354,7 @@ The encoder supply voltage +5V and GND are sensitive to reverse voltage.
 Pay attention when connecting these wires!
 
 <p align="center">
-  <img src="/images/example_motor.jpg" width="60%"/>
+  <img src="images/example_motor.jpg" width="60%"/>
 </p>
 
 
@@ -365,7 +366,7 @@ Integrated voltage monitoring of the power management module protects your robot
 The following diagram shows an example of the logic functions.
 
 <p align="center">
-  <img src="/images/simulateEnableLogic/simulateEnableLogic.png" width="80%"/>
+  <img src="images/simulateEnableLogic/simulateEnableLogic.png" width="80%"/>
 </p>
 
 > **Warning:** Despite these protective functions, you must always ensure that the device is used as intended.
@@ -380,7 +381,7 @@ The ROS interface is encapsulated in a single class.
 For most users, it is sufficient to use the EduDrive class, as the included node edu_drive_node.cpp does.
 
 <p align="center">
-  <img src="/doc/edu_drive_classdiagram.png" width="80%"/>
+  <img src="doc/edu_drive_classdiagram.png" width="80%"/>
 </p>
 
 #### Adding additional CAN devices
@@ -448,7 +449,105 @@ If the robot is not to be operated exclusively autonomously, a robust wireless c
 
 ## Troubleshooting
 
-#### 🚫 The robot does not drive
+### Debugging the ROS Node
+
+Use the following workflow to debug the `edu_drive_ros2` node with VS Code and gdbserver.
+
+**1. Install the debugger tools**
+
+```bash
+sudo apt update
+sudo apt install gdb gdbserver
+```
+
+**2. Build the ROS node in debug mode**
+
+Add this line near the top of `CMakeLists.txt`:
+
+```cmake
+set(CMAKE_BUILD_TYPE Debug)
+```
+
+Or rebuild the package directly with Debug configuration:
+
+```bash
+cd ~/ros2_ws
+colcon build --packages-select edu_drive_ros2 --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Debug
+source install/setup.bash
+```
+
+**3. Start the ROS node with gdbserver**
+
+Start the node with a gdbserver prefix:
+
+```bash
+ros2 run --prefix 'gdbserver localhost:3000' edu_drive_ros2 edu_drive_ros2_node
+```
+
+The terminal output shows the executable path currently used by gdbserver. Use that path as the `program` value in step 3.
+
+Alternatively you can also comment-in the `prefix` line in the [lauchfile](launch/edu_drive.launch.py) to automatically launch the node in debug mode.
+
+```py
+    edu_drive = Node(
+      package='edu_drive_ros2',
+      executable='edu_drive_ros2_node',
+      name='edu_drive_ros2_node',
+      parameters=[parameter_file],
+      prefix=['gdbserver localhost:3210'], #< Comment-in this line
+      namespace=os.environ.get('EDU_ROBOT_NAMESPACE', "eduard"),
+      output='screen'
+    )  
+```
+
+This way you can call the launchfile with all parameters as usual.
+
+```bash
+ros2 launch edu_drive_ros2 edu_drive.launch.py
+```
+
+**4. Create the VS Code debugger configuration**
+
+Open the VS Code Debug view, click **Create a launch.json file**, and add the following configuration.
+Replace the program path `program` with the executable path printed by gdbserver in step 3.
+
+```json
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Debug edu_drive_ros2_node (gdbserver)",
+      "type": "cppdbg",
+      "request": "launch",
+      "MIMode": "gdb",
+      "miDebuggerServerAddress": "localhost:3000",
+      "cwd": "${workspaceFolder}",
+      "program": "/home/<user>/ros2_ws/build/edu_drive_ros2/edu_drive_ros2_node",
+      "setupCommands": [
+        {
+          "description": "Enable pretty-printing for gdb",
+          "text": "-enable-pretty-printing",
+          "ignoreFailures": true
+        },
+        {
+          "description": "Set disassembly flavor to Intel",
+          "text": "-gdb-set disassembly-flavor intel",
+          "ignoreFailures": true
+        }
+      ]
+    }
+  ]
+}
+```
+
+**5. Start debugging in VS Code**
+
+Select your debug configuration and press the green start button in the Debug view.
+Now you can set breakpoints and step through the running ROS node.
+
+
+
+### 🚫 The robot does not drive
 > **Error:**
 > The robot remains stationary even when velocity commands are sent.
 > This can be caused by power supply issues, emergency stop activation, communication problems, or incorrect motor controller configuration.
@@ -477,7 +576,7 @@ If the robot is not to be operated exclusively autonomously, a robust wireless c
    - Refer to the motor controller documentation for proper DIP switch settings based on your hardware setup
 
 
-#### 🚫 Wheels rotate at full speed and don't respond to velocity commands
+### 🚫 Wheels rotate at full speed and don't respond to velocity commands
 > **Error:**
 > This behavior typically indicates an encoder polarity problem.
 > When encoders are wired with reversed polarity, the controller cannot properly regulate motor speed, causing motors to spin uncontrolled.
@@ -491,7 +590,7 @@ If the robot is not to be operated exclusively autonomously, a robust wireless c
    > The `invertEnc` parameter is the same for all motors of a hardware type.
    > If all motors are the same, the parameter must also be the same for all motors.
 
-#### 🚫 Wheels rotate in the wrong direction
+### 🚫 Wheels rotate in the wrong direction
 > **Error:**
 > You have calculated the kinematic matrix for your robot but some wheels rotate in the wrong direction.
 
@@ -503,7 +602,7 @@ If the robot is not to be operated exclusively autonomously, a robust wireless c
    > Each motor has its own kinematic row (a three-dimensional vector).
    > Only modify the rows for motors that rotate in the wrong direction.
 
-#### 🚫 The enable signal is sometimes reset for no reason
+### 🚫 The enable signal is sometimes reset for no reason
 > **Error:**
 > Sometimes, for example while driving, the motors stop responding. If you then resend the enable signal, everything works again.
 
