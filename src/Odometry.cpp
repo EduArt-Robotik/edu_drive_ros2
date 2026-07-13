@@ -1,191 +1,221 @@
 #include "Odometry.h"
+
 #include <algorithm>
-#include <iostream>
 #include <cmath>
+#include <iostream>
 
 namespace edu
 {
 
-Odometry::Odometry(OdometryMode odometry_mode, edu::Matrix invKinematicModel) : _odometry_mode(odometry_mode), _invKinematics(invKinematicModel)
+Odometry::Odometry(OdometryMode odometry_mode, edu::Matrix invKinematicModel)
+  : _odometry_mode(odometry_mode)
+  , _invKinematics(invKinematicModel)
 {
-    reset();
+  reset();
 }
 
 Odometry::~Odometry()
 {
-
 }
 
 void Odometry::reset()
 {
-    _is_pos_init = false;
-    _is_vel_init = false;
+  _is_pos_init = false;
+  _is_vel_init = false;
 
-    _prev_pos_vec = edu::Vec(_invKinematics.cols(), 0.0);
-    _prev_time_ns = 0;
+  _prev_pos_vec = edu::Vec(_invKinematics.cols(), 0.0);
+  _prev_time_ns = 0;
 
-    _pose.x = 0;
-    _pose.y = 0;
-    _pose.theta = 0;
+  _pose.x     = 0;
+  _pose.y     = 0;
+  _pose.theta = 0;
 }
 
 void Odometry::set_mode(OdometryMode odometry_mode)
 {
-    _odometry_mode = odometry_mode;
+  _odometry_mode = odometry_mode;
 }
 
-OdometryMode Odometry::get_mode(){
-    return _odometry_mode;
+OdometryMode Odometry::get_mode()
+{
+  return _odometry_mode;
 }
 
 bool Odometry::is_pos_init()
 {
-    return _is_pos_init;
+  return _is_pos_init;
 }
 
 bool Odometry::is_vel_init()
 {
-    return _is_vel_init;
+  return _is_vel_init;
 }
 
 Pose Odometry::get_pose()
 {
-    return _pose;
+  return _pose;
 }
 
 int Odometry::update(edu::Vec mot_pos_vec)
 {
-    int size = static_cast<int>(mot_pos_vec.size());
-    if( size !=_invKinematics.cols())
+  int size = static_cast<int>(mot_pos_vec.size());
+  if (size != _invKinematics.cols())
+  {
+    std::cout << "Odometry::update: Received velocity vector with invalid length. Received " << mot_pos_vec.size()
+              << "  elements, Expected " << _invKinematics.cols() << " elements" << std::endl;
+    return -1;
+  }
+
+  int status = 1;
+
+  if ((_odometry_mode == edu::OdometryMode::Relative) || (_is_pos_init))
+  {
+
+    edu::Vec vOmega = mot_pos_vec;
+
+    // In case absolute values are given, calculate the difference to previous position.
+    if (_odometry_mode == edu::OdometryMode::Absolute)
     {
-        std::cout   << "Odometry::update: Received velocity vector with invalid length. Received "
-                    << mot_pos_vec.size() << "  elements, Expected " <<  _invKinematics.cols() << " elements" << std::endl;
-        return -1;
+      for (int i = 0; i < size; i++)
+      {
+        vOmega.at(i) -= _prev_pos_vec.at(i);
+      }
     }
 
-    int status = 1;
+    // Calculate new position in robot coordinate system
+    edu::Vec vTwist = _invKinematics * vOmega;
 
-    if((_odometry_mode == edu::OdometryMode::Relative) || (_is_pos_init)){
-        
-        edu::Vec vOmega = mot_pos_vec;
-
-        // In case absolute values are given, calculate the difference to previous position.
-        if(_odometry_mode == edu::OdometryMode::Absolute){
-            for(int i = 0; i < size; i++){
-                vOmega.at(i) -= _prev_pos_vec.at(i);
-            }
-        }
-
-        // Calculate new position in robot coordinate system
-        edu::Vec vTwist = _invKinematics * vOmega;
-
-        if(std::none_of(vTwist.begin(), vTwist.end(), [](double i){ return std::isnan(i) || std::isinf(i); }))
-        {
-            // Calculate new position in odom coordinate system
-            status = propagate_position(vTwist);
-        }else{
-            status = -1;
-        }
+    if (std::none_of(
+          vTwist.begin(), vTwist.end(),
+          [](double i)
+          {
+            return std::isnan(i) || std::isinf(i);
+          }))
+    {
+      // Calculate new position in odom coordinate system
+      status = propagate_position(vTwist);
     }
-    
-    if(status == 1){
-        _is_pos_init = true;
-        _prev_pos_vec = mot_pos_vec;
+    else
+    {
+      status = -1;
     }
+  }
 
-    return status;
+  if (status == 1)
+  {
+    _is_pos_init  = true;
+    _prev_pos_vec = mot_pos_vec;
+  }
+
+  return status;
 }
 
 int Odometry::update(uint64_t time_ns, edu::Vec mot_vel_vec)
 {
-    int size = static_cast<int>(mot_vel_vec.size());
-    if(size != _invKinematics.cols())
+  int size = static_cast<int>(mot_vel_vec.size());
+  if (size != _invKinematics.cols())
+  {
+    std::cout << "Odometry::update: Received velocity vector with invalid length. Received " << mot_vel_vec.size()
+              << "  elements, Expected " << _invKinematics.cols() << " elements" << std::endl;
+    return -1;
+  }
+
+  int status = 1;
+
+  if ((_odometry_mode == edu::OdometryMode::Relative) || (_is_vel_init))
+  {
+
+    // In case absolute values are given, calculate the difference to previous time.
+    double dt_s = (_odometry_mode == edu::OdometryMode::Absolute) ? static_cast<double>(time_ns - _prev_time_ns) / 1e9
+                                                                  : static_cast<double>(time_ns) / 1e9;
+
+    // Calculate change in motor position
+    // Convert rpm to rad per sec
+    edu::Vec vOmega = mot_vel_vec;
+
+    const double factor = dt_s * RPM_2_RAD_PER_SEC;
+    for (auto& v : vOmega)
     {
-        std::cout   << "Odometry::update: Received velocity vector with invalid length. Received "
-                    << mot_vel_vec.size() << "  elements, Expected " <<  _invKinematics.cols() << " elements" << std::endl;
-        return -1;
+      v *= factor;
     }
 
-    int status = 1;
+    edu::Vec vTwist = _invKinematics * vOmega;
 
-    if((_odometry_mode == edu::OdometryMode::Relative) || (_is_vel_init)){
-
-        // In case absolute values are given, calculate the difference to previous time.
-        double dt_s = (_odometry_mode == edu::OdometryMode::Absolute)
-                ? static_cast<double>(time_ns - _prev_time_ns) / 1e9
-                : static_cast<double>(time_ns) / 1e9;
-
-        // Calculate change in motor position
-        // Convert rpm to rad per sec
-        edu::Vec vOmega = mot_vel_vec;
-        
-        const double factor = dt_s * RPM_2_RAD_PER_SEC;
-        for(auto& v : vOmega){
-            v *= factor;
-        }
-
-        edu::Vec vTwist = _invKinematics * vOmega;
-
-        if(std::none_of(vTwist.begin(), vTwist.end(), [](double i){ return std::isnan(i) || std::isinf(i); }))
-        {
-            // Calculate new position in odom coordinate system
-            status = propagate_position(vTwist);
-        }else{
-            status = -1;
-        }
+    if (std::none_of(
+          vTwist.begin(), vTwist.end(),
+          [](double i)
+          {
+            return std::isnan(i) || std::isinf(i);
+          }))
+    {
+      // Calculate new position in odom coordinate system
+      status = propagate_position(vTwist);
     }
-
-    if(status == 1){
-        _is_vel_init = true;
-        _prev_time_ns = time_ns;
+    else
+    {
+      status = -1;
     }
+  }
 
-    return status;
+  if (status == 1)
+  {
+    _is_vel_init  = true;
+    _prev_time_ns = time_ns;
+  }
+
+  return status;
 }
 
 int Odometry::propagate_position(edu::Vec twistVec)
 {
-    int status = 1;
+  int status = 1;
 
-    auto dx     = twistVec[0];
-    auto dy     = twistVec[1];
-    auto dtheta = twistVec[2];
+  auto dx     = twistVec[0];
+  auto dy     = twistVec[1];
+  auto dtheta = twistVec[2];
 
-    // Euclidean distance of last move
-    double ds = sqrt(dx*dx+dy*dy);
+  // Euclidean distance of last move
+  double ds = sqrt(dx * dx + dy * dy);
 
-    // Direction of last move in world coordinate system
-    double alpha = _pose.theta + atan2(dy, dx);
+  // Direction of last move in world coordinate system
+  double alpha = _pose.theta + atan2(dy, dx);
 
-    // Turn radius of last move
-    double r = ds/dtheta;
+  // Turn radius of last move
+  double r = ds / dtheta;
 
-    // Calculate movement in world coordinate system
-    double dx_world = 0;
-    double dy_world = 0;
-    if(std::abs(dtheta) < _straight_line_threshold){
-        // Straight line move
-        dx_world = ds * cos(alpha);
-        dy_world = ds * sin(alpha);
-    }else{
-        // Move on curved path
-        dx_world = r * (- sin(alpha) + sin(alpha + dtheta));
-        dy_world = r * (+ cos(alpha) - cos(alpha + dtheta));
-    }
+  // Calculate movement in world coordinate system
+  double dx_world = 0;
+  double dy_world = 0;
+  if (std::abs(dtheta) < _straight_line_threshold)
+  {
+    // Straight line move
+    dx_world = ds * cos(alpha);
+    dy_world = ds * sin(alpha);
+  }
+  else
+  {
+    // Move on curved path
+    dx_world = r * (-sin(alpha) + sin(alpha + dtheta));
+    dy_world = r * (+cos(alpha) - cos(alpha + dtheta));
+  }
 
-    // Check for errors
-    if(std::isnan(dx) || std::isinf(dx)) status = -2;
-    if(std::isnan(dy) || std::isinf(dy)) status = -2;
-    if(std::isnan(dtheta) || std::isinf(dtheta)) status = -2;
+  // Check for errors
+  if (std::isnan(dx) || std::isinf(dx))
+    status = -2;
+  if (std::isnan(dy) || std::isinf(dy))
+    status = -2;
+  if (std::isnan(dtheta) || std::isinf(dtheta))
+    status = -2;
 
-    if(status == 1){    
-        // Sum up increments
-        _pose.x += dx_world;
-        _pose.y += dy_world;
-        _pose.theta += dtheta;
-    }
+  if (status == 1)
+  {
+    // Sum up increments
+    _pose.x += dx_world;
+    _pose.y += dy_world;
+    _pose.theta += dtheta;
+  }
 
-    return status;
+  return status;
 }
 
-}
+} // namespace edu

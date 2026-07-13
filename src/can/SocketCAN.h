@@ -1,23 +1,23 @@
 #pragma once
 
-#include "SocketCANObserver.h"
-
-#include <linux/can/raw.h>
+#include <chrono>
 #include <linux/can.h>
-
-#include <string>
-#include <vector>
-#include <thread>
+#include <linux/can/raw.h>
 #include <memory>
 #include <mutex>
-#include <chrono>
+#include <string>
+#include <thread>
+#include <vector>
+
+#include "SocketCANObserver.h"
 
 namespace edu
 {
 
 /**
  * @class SocketCAN
- * @brief CAN communication class. This class uses a threaded listener and observer pattern notifying observer class instances.
+ * @brief CAN communication class. This class uses a threaded listener and observer pattern notifying observer class
+ * instances.
  * @author Stefan May
  * @date 13.05.2018
  */
@@ -78,7 +78,6 @@ public:
   bool closePort();
 
 private:
-
   bool listener();
 
   int _soc;
@@ -90,7 +89,7 @@ private:
   bool _portOpen;
 
   std::chrono::time_point<std::chrono::steady_clock> _next_time;
-  
+
   std::vector<SocketCANObserver*> _observers;
 
   std::unique_ptr<std::thread> _thread;
@@ -98,4 +97,4 @@ private:
   std::mutex _mutex;
 };
 
-}
+} // namespace edu

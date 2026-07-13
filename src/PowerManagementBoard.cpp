@@ -1,8 +1,10 @@
 #include "PowerManagementBoard.h"
-#include <iostream>
-#include "can/canprotocol.h"
-#include <unistd.h>
+
 #include <cstring>
+#include <iostream>
+#include <unistd.h>
+
+#include "can/canprotocol.h"
 
 namespace edu
 {
@@ -12,30 +14,31 @@ PowerManagementBoard::PowerManagementBoard(SocketCAN* can, bool verbosity)
   _init      = false;
   _verbosity = verbosity;
   _can       = can;
-  
+
   _voltage = 0.0;
   _current = 0.0;
 
   makeCanStdID(SYSID_PWRMGMT, NODEID_PWRMGMT, &_inputAddress, &_outputAddress, &_broadcastAddress);
   _cf.can_id = _inputAddress;
-  if(verbosity)
-    std::cout << "#PowerManagementBoard CAN Input ID: " << std::hex << _inputAddress << " CAN Output ID: " << _outputAddress << std::endl;
+  if (verbosity)
+    std::cout << "#PowerManagementBoard CAN Input ID: " << std::hex << _inputAddress
+              << " CAN Output ID: " << _outputAddress << std::endl;
 
   canid_t canidOutput = _outputAddress;
 
   setCANId(canidOutput);
   can->registerObserver(this);
-  
-  for(unsigned int i=0; i<500; i++)
+
+  for (unsigned int i = 0; i < 500; i++)
   {
-    if(_init) break;
+    if (_init)
+      break;
     usleep(10000);
   }
 }
 
 PowerManagementBoard::~PowerManagementBoard()
 {
-
 }
 
 bool PowerManagementBoard::enable()
@@ -64,30 +67,31 @@ double PowerManagementBoard::getCurrent()
 
 void PowerManagementBoard::notify(struct can_frame* frame)
 {
-  if(frame->can_dlc==6)
+  if (frame->can_dlc == 6)
   {
     //@ToDo: deserialize properly
-    unsigned char reversedBytes[4] = {frame->data[4], frame->data[3], frame->data[2], frame->data[1]};
-    if(frame->data[0] == 1)
+    unsigned char reversedBytes[4] = { frame->data[4], frame->data[3], frame->data[2], frame->data[1] };
+    if (frame->data[0] == 1)
     {
-        // deserialize 4 bytes to a float, then widen to double
-        float tmp;
-        std::memcpy(&tmp, &reversedBytes, sizeof(tmp));
-        _current = static_cast<double>(tmp);
+      // deserialize 4 bytes to a float, then widen to double
+      float tmp;
+      std::memcpy(&tmp, &reversedBytes, sizeof(tmp));
+      _current = static_cast<double>(tmp);
     }
-    else if(frame->data[0] == 2)
+    else if (frame->data[0] == 2)
     {
-        // deserialize 4 bytes to a float, then widen to double
-        float tmp;
-        std::memcpy(&tmp, &reversedBytes, sizeof(tmp));
-        _voltage = static_cast<double>(tmp);
+      // deserialize 4 bytes to a float, then widen to double
+      float tmp;
+      std::memcpy(&tmp, &reversedBytes, sizeof(tmp));
+      _voltage = static_cast<double>(tmp);
     }
-    
-    if(_verbosity)
-      std::cout << "PowerManagement CANID " << _cf.can_id << " recerived data: V_pwr_mgmt=" << _voltage << "V I_pwr_mgmt=" << _current << "A" << std::endl;
-      
+
+    if (_verbosity)
+      std::cout << "PowerManagement CANID " << _cf.can_id << " recerived data: V_pwr_mgmt=" << _voltage
+                << "V I_pwr_mgmt=" << _current << "A" << std::endl;
+
     _init = true;
   }
 }
 
-}
+} // namespace edu

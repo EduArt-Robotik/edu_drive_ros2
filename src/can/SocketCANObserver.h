@@ -1,8 +1,8 @@
 #pragma once
 
-#include <linux/can.h>
-#include <chrono>
 #include <atomic>
+#include <chrono>
+#include <linux/can.h>
 
 namespace edu
 {
@@ -39,12 +39,13 @@ public:
   canid_t getCANId();
 
   /**
-   * Check connection status, i.e., whether the elapsed time since the last message arrival is smaler than a specific timeout.
+   * Check connection status, i.e., whether the elapsed time since the last message arrival is smaler than a specific
+   * timeout.
    * @param[in] timeout_ms timeout in milliseconds
    * @return connection status
    */
-  bool checkConnectionStatus(unsigned int timeout_ms=100);
-  
+  bool checkConnectionStatus(unsigned int timeout_ms = 100);
+
   /**
    * Notify the observer with new message
    * @param[in] frame CAN Frame
@@ -59,11 +60,9 @@ protected:
   virtual void notify(struct can_frame* frame) = 0;
 
 private:
-
   canid_t _canid;
 
   std::atomic<std::int64_t> _last_msg_stamp_ns;
-
 };
 
-}
+} // namespace edu

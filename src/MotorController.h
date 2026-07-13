@@ -1,460 +1,458 @@
 #pragma once
 
-#include "can/SocketCAN.h"
-#include <vector>
 #include <chrono>
-#include <tuple>
 #include <mutex>
+#include <tuple>
+#include <vector>
+
+#include "can/SocketCAN.h"
 
 namespace edu
 {
 
-  using namespace std::chrono_literals;
+using namespace std::chrono_literals;
 
-  struct Version
+struct Version
+{
+  uint16_t major = 0;
+  uint16_t minor = 0;
+  uint16_t patch = 0;
+
+  inline bool operator==(const Version& other) const
   {
-    uint16_t major = 0;
-    uint16_t minor = 0;
-    uint16_t patch = 0;
+    return (major == other.major) && (minor == other.minor) && (patch == other.patch);
+  }
 
-    inline bool operator== (const Version& other) const{
-      return (major == other.major) && (minor == other.minor) && (patch == other.patch);
-    }
-
-    inline bool operator< (const Version& other) const{
-      return std::tie(major, minor, patch) < std::tie(other.major, other.minor, other.patch);
-    }
-
-    inline bool operator> (const Version& other) const{
-      return other < *this;
-    }
-
-    inline bool isValid() const{
-      return (major != 0) || (minor != 0) || (patch != 0);
-    }
-  };
-
-  enum class CanResponseMode : unsigned int
+  inline bool operator<(const Version& other) const
   {
-    Rpm = 0,
-    Pos = 1
-  };
+    return std::tie(major, minor, patch) < std::tie(other.major, other.minor, other.patch);
+  }
 
-  struct MotorParams
+  inline bool operator>(const Version& other) const { return other < *this; }
+
+  inline bool isValid() const { return (major != 0) || (minor != 0) || (patch != 0); }
+};
+
+enum class CanResponseMode : unsigned int
+{
+  Rpm = 0,
+  Pos = 1
+};
+
+struct MotorParams
+{
+  // Channel of motor controller interface
+  int channel;
+
+  // Kinematic vector
+  std::vector<double> kinematics;
+
+  CanResponseMode responseMode;
+
+  int invertEnc;
+  double gearRatio;
+  double encoderRatio;
+  double rpmMax;
+
+  MotorParams()
   {
-    // Channel of motor controller interface
-    int channel;
-
-    // Kinematic vector
-    std::vector<double> kinematics;
-
-    CanResponseMode responseMode;
-    
-    int invertEnc;
-    double gearRatio;
-    double encoderRatio;
-    double rpmMax;
-    
-    MotorParams()
-    {
-      channel       = 0;
-      invertEnc     = 0;
-      gearRatio     = 0.0;
-      encoderRatio  = 0.0;
-      rpmMax        = 0.0;
-      kinematics.clear();
-      responseMode = CanResponseMode::Rpm;
-    }
-
-    /**
-     * Copy constructor
-     * @param[in] p parameter instance to be copied
-     */
-    MotorParams(const MotorParams &p)
-    {
-      channel       = p.channel;
-      kinematics    = p.kinematics;
-      responseMode  = p.responseMode;
-      gearRatio     = p.gearRatio;
-      encoderRatio  = p.encoderRatio;
-      rpmMax        = p.rpmMax;
-      invertEnc     = p.invertEnc;
-    }
-  };
-
-  struct ControllerParams
-  {
-    // CAN interface ID
-    int canID;
-
-    // Control parameters
-    unsigned short frequencyScale;
-    double inputWeight;
-    unsigned short timeout;
-    double kp;
-    double ki;
-    double kd;
-    int antiWindup;
-
-    CanResponseMode responseMode;
-    std::vector<MotorParams> motorParams;
-
-    /**
-     * Standard constructor assigns default parameters
-     */
-    ControllerParams()
-    {
-      canID = 0;
-      frequencyScale = 32;
-      inputWeight = 0.8;
-      timeout = 300;
-      kp = 0.0;
-      ki = 0.0;
-      kd = 0.0;
-      antiWindup = 1;
-      responseMode = CanResponseMode::Rpm;
-
-      motorParams.resize(2);
-      std::vector<double> zeroKinematic{0.0, 0.0, 0.0};
-      motorParams[0].channel = 0;
-      motorParams[0].kinematics = zeroKinematic;
-      motorParams[1].channel = 1;
-      motorParams[1].kinematics = zeroKinematic;
-    }
-
-    /**
-     * Copy constructor
-     * @param[in] p parameter instance to be copied
-     */
-    ControllerParams(const ControllerParams &p)
-    {
-      canID = p.canID;
-      frequencyScale = p.frequencyScale;
-      inputWeight = p.inputWeight;
-      timeout = p.timeout;
-      kp = p.kp;
-      ki = p.ki;
-      kd = p.kd;
-      antiWindup = p.antiWindup;
-      responseMode = p.responseMode;
-      motorParams = p.motorParams;
-    }
-  };
+    channel      = 0;
+    invertEnc    = 0;
+    gearRatio    = 0.0;
+    encoderRatio = 0.0;
+    rpmMax       = 0.0;
+    kinematics.clear();
+    responseMode = CanResponseMode::Rpm;
+  }
 
   /**
-   * @class MotorControllerCAN
-   * @brief CAN interface for EduArt's robot motor controller.
-   * @author Stefan May
-   * @date 27.04.2022
+   * Copy constructor
+   * @param[in] p parameter instance to be copied
    */
-  class MotorController : public SocketCANObserver
+  MotorParams(const MotorParams& p)
   {
-  public:
-    /**
-     * Constructor
-     * @param[in] can SocketCAN instance
-     * @param[in] params controller parameters
-     * @param[in] verbosity verbosity output flag
-     */
-    MotorController(SocketCAN *can, ControllerParams params, bool verbosity = 0);
+    channel      = p.channel;
+    kinematics   = p.kinematics;
+    responseMode = p.responseMode;
+    gearRatio    = p.gearRatio;
+    encoderRatio = p.encoderRatio;
+    rpmMax       = p.rpmMax;
+    invertEnc    = p.invertEnc;
+  }
+};
 
-    /**
-     * Destructor
-     */
-    ~MotorController();
+struct ControllerParams
+{
+  // CAN interface ID
+  int canID;
 
-    /**
-     * Check whether device is initialized after powering on
-     */
-    bool isInitialized();
+  // Control parameters
+  unsigned short frequencyScale;
+  double inputWeight;
+  unsigned short timeout;
+  double kp;
+  double ki;
+  double kd;
+  int antiWindup;
 
-    /**
-     * Revert initialization state
-     */
-    void deinit();
+  CanResponseMode responseMode;
+  std::vector<MotorParams> motorParams;
 
-    /**
-     * Reinitialize device
-     */
-    void reinit();
+  /**
+   * Standard constructor assigns default parameters
+   */
+  ControllerParams()
+  {
+    canID          = 0;
+    frequencyScale = 32;
+    inputWeight    = 0.8;
+    timeout        = 300;
+    kp             = 0.0;
+    ki             = 0.0;
+    kd             = 0.0;
+    antiWindup     = 1;
+    responseMode   = CanResponseMode::Rpm;
 
-    /**
-     * Enable device
-     * @return successful transmission of enable command
-     */
-    bool enable();
+    motorParams.resize(2);
+    std::vector<double> zeroKinematic{ 0.0, 0.0, 0.0 };
+    motorParams[0].channel    = 0;
+    motorParams[0].kinematics = zeroKinematic;
+    motorParams[1].channel    = 1;
+    motorParams[1].kinematics = zeroKinematic;
+  }
 
-    /**
-     * Disable device
-     * @return successful transmission of disabling command
-     */
-    bool disable();
+  /**
+   * Copy constructor
+   * @param[in] p parameter instance to be copied
+   */
+  ControllerParams(const ControllerParams& p)
+  {
+    canID          = p.canID;
+    frequencyScale = p.frequencyScale;
+    inputWeight    = p.inputWeight;
+    timeout        = p.timeout;
+    kp             = p.kp;
+    ki             = p.ki;
+    kd             = p.kd;
+    antiWindup     = p.antiWindup;
+    responseMode   = p.responseMode;
+    motorParams    = p.motorParams;
+  }
+};
 
-    /**
-     * Get state of motor controller (enabled / disabled)
-     * @return enable state
-     */
-    bool getEnableState();
+/**
+ * @class MotorControllerCAN
+ * @brief CAN interface for EduArt's robot motor controller.
+ * @author Stefan May
+ * @date 27.04.2022
+ */
+class MotorController : public SocketCANObserver
+{
+public:
+  /**
+   * Constructor
+   * @param[in] can SocketCAN instance
+   * @param[in] params controller parameters
+   * @param[in] verbosity verbosity output flag
+   */
+  MotorController(SocketCAN* can, ControllerParams params, bool verbosity = 0);
 
-    /**
-     * Send synchronization signal, resetting a counter in order to have a common time basis on all controllers
-     * @return successful transmission of synchronization signal
-     */
-    bool broadcastExternalSync();
+  /**
+   * Destructor
+   */
+  ~MotorController();
 
-    /**
-     * @brief Get the parameters of connected motors
-     *
-     * @return MotorParams vector
-     */
-    const std::vector<MotorParams>& getMotorParams();
+  /**
+   * Check whether device is initialized after powering on
+   */
+  bool isInitialized();
 
-    /**
-     * Configure response of motor controller (revolutions per minute or position)
-     * @param[in] mode response mode
-     * @return successful transmission of configure command
-     */
-    bool configureResponse(enum CanResponseMode mode);
+  /**
+   * Revert initialization state
+   */
+  void deinit();
 
-    /**
-     * Invert encoder polarity
-     * @param[in] invert set to true, if channels need to be inverted
-     * @return successful transmission of configure command
-     */
-    bool invertEncoderPolarity(bool invert[2]);
+  /**
+   * Reinitialize device
+   */
+  void reinit();
 
-    /**
-     * Get assigned canID via constructor
-     * @return ID
-     */
-    unsigned short getCanId();
+  /**
+   * Enable device
+   * @return successful transmission of enable command
+   */
+  bool enable();
 
-    /**
-     * Set timeout interval. The motor controller needs frequently transmitted commands.
-     * If the time span between two commands is longer than this timeout interval, the device is disabled.
-     * The user needs to send an enabling command again.
-     * @param[in] timeoutInMillis timeout interval in milliseconds
-     * @return true==successful CAN transmission
-     */
-    bool setTimeout(unsigned short timeoutInMillis);
+  /**
+   * Disable device
+   * @return successful transmission of disabling command
+   */
+  bool disable();
 
-    /**
-     * Accessor to timeout parameter. See commets of mutator for more information.
-     * @return timeout in milliseconds
-     */
-    unsigned short getTimeout();
+  /**
+   * Get state of motor controller (enabled / disabled)
+   * @return enable state
+   */
+  bool getEnableState();
 
-    /**
-     * Set gear ratio (factor between motor and wheel revolutions)
-     * @param[in] gearRatio (motor rev) / (wheel rev) for motor 1 and 2 separately
-     * @return true==successful CAN transmission
-     */
-    bool setGearRatio(double gearRatio[2]);
+  /**
+   * Send synchronization signal, resetting a counter in order to have a common time basis on all controllers
+   * @return successful transmission of synchronization signal
+   */
+  bool broadcastExternalSync();
 
-    /**
-     * Accessor to gear ratio parameter
-     * @return gearRatio (motor rev) / (wheel rev) for motor 1 and 2
-     */
-    double getGearRatio(size_t motor_num);
+  /**
+   * @brief Get the parameters of connected motors
+   *
+   * @return MotorParams vector
+   */
+  const std::vector<MotorParams>& getMotorParams();
 
-    /**
-     * Set number of encoder ticks per motor revolution
-     * @param[in] encoderTicksPerRev encoder ticks per motor revolution for motor 1 and 2
-     * @return true==successful CAN transmission
-     */
-    bool setEncoderTicksPerRev(double encoderTicksPerRev[2]);
+  /**
+   * Configure response of motor controller (revolutions per minute or position)
+   * @param[in] mode response mode
+   * @return successful transmission of configure command
+   */
+  bool configureResponse(enum CanResponseMode mode);
 
-    /**
-     * Accessor to parameter representing encoder ticks per motor revolution
-     * @return encoder ticks per motor revolution for motor 1 and 2
-     */
-    double getEncoderTicksPerRev(size_t motor_num);
+  /**
+   * Invert encoder polarity
+   * @param[in] invert set to true, if channels need to be inverted
+   * @return successful transmission of configure command
+   */
+  bool invertEncoderPolarity(bool invert[2]);
 
-    /**
-     * Set maximum revolutions per minute for the motors
-     * @param[in] maxRPM maximum revolutions per minute for motor 1 and 2 separately
-     * @return true==successful CAN transmission
-     */
-    bool setMaxRPM(double maxRPM[2]);
+  /**
+   * Get assigned canID via constructor
+   * @return ID
+   */
+  unsigned short getCanId();
 
-    /**
-     * Accessor to maximum revolutions per minute parameter
-     * @return maximum revolutions per minute for motor 1 and 2
-     */
-    double getMaxRPM(size_t motor_num);
+  /**
+   * Set timeout interval. The motor controller needs frequently transmitted commands.
+   * If the time span between two commands is longer than this timeout interval, the device is disabled.
+   * The user needs to send an enabling command again.
+   * @param[in] timeoutInMillis timeout interval in milliseconds
+   * @return true==successful CAN transmission
+   */
+  bool setTimeout(unsigned short timeoutInMillis);
 
-    /**
-     * Set scaling parameter for PWM frequency. The base frequency is 500kHz, of which one can apply a fractional amount, e.g.
-     * 10 => 50kHz
-     * 20 => 25kHz
-     * Default is 32 => 15,625kHz
-     * Important: This value can only be changed before the motor controllers gets enabled.
-     * @param[in] scale denominator d of term 1/d x 500kHz
-     */
-    bool setFrequencyScale(unsigned short scale);
+  /**
+   * Accessor to timeout parameter. See commets of mutator for more information.
+   * @return timeout in milliseconds
+   */
+  unsigned short getTimeout();
 
-    /**
-     * Accessor to frequency scaling parameter, see mutator for details.
-     * @return scale denominator d of term 1/d x 500kHz
-     */
-    unsigned short getFrequencyScale();
+  /**
+   * Set gear ratio (factor between motor and wheel revolutions)
+   * @param[in] gearRatio (motor rev) / (wheel rev) for motor 1 and 2 separately
+   * @return true==successful CAN transmission
+   */
+  bool setGearRatio(double gearRatio[2]);
 
-    /**
-     * Accessor to pulse width limit, see mutator for details.
-     * @return pulse width limit
-     */
-    unsigned char getMaxPulseWidth();
+  /**
+   * Accessor to gear ratio parameter
+   * @return gearRatio (motor rev) / (wheel rev) for motor 1 and 2
+   */
+  double getGearRatio(size_t motor_num);
 
-    /**
-     * Set pulse width modulated signal
-     * @param[in] rpm pulse width in range [-100;100], this device supports 2 channels
-     * @return success
-     */
-    bool setPWM(int pwm[2]);
+  /**
+   * Set number of encoder ticks per motor revolution
+   * @param[in] encoderTicksPerRev encoder ticks per motor revolution for motor 1 and 2
+   * @return true==successful CAN transmission
+   */
+  bool setEncoderTicksPerRev(double encoderTicksPerRev[2]);
 
-    /**
-     * Set motor revolutions per minute
-     * @param[in] rpm set point value, this device supports 2 channels
-     * @return success
-     */
-    bool setRPM(double rpm[2]);
+  /**
+   * Accessor to parameter representing encoder ticks per motor revolution
+   * @return encoder ticks per motor revolution for motor 1 and 2
+   */
+  double getEncoderTicksPerRev(size_t motor_num);
 
-    /**
-     * Get either motor revolutions per minute or motor position (encoder ticks). This depends on the configuration canResponseMode.
-     * @param[out] response revolutions per minute for motor 1 and 2 / position of motor 1 and 2. This is a modulo 2^15 value.
-     */
-    void getWheelResponse(double response[2]);
+  /**
+   * Set maximum revolutions per minute for the motors
+   * @param[in] maxRPM maximum revolutions per minute for motor 1 and 2 separately
+   * @return true==successful CAN transmission
+   */
+  bool setMaxRPM(double maxRPM[2]);
 
-    /**
-     * Set proportional factor of PID controller
-     * @param[in] kp proportional factor
-     * @return success
-     */
-    bool setKp(double kp);
+  /**
+   * Accessor to maximum revolutions per minute parameter
+   * @return maximum revolutions per minute for motor 1 and 2
+   */
+  double getMaxRPM(size_t motor_num);
 
-    /**
-     * Accessor to proportional factor of PID controller
-     * @return proportional factor
-     */
-    double getKp();
+  /**
+   * Set scaling parameter for PWM frequency. The base frequency is 500kHz, of which one can apply a fractional
+   * amount, e.g. 10 => 50kHz 20 => 25kHz Default is 32 => 15,625kHz Important: This value can only be changed before
+   * the motor controllers gets enabled.
+   * @param[in] scale denominator d of term 1/d x 500kHz
+   */
+  bool setFrequencyScale(unsigned short scale);
 
-    /**
-     * Set integration factor of PID controller
-     * @param[in] ki integration factor
-     * @return success
-     */
-    bool setKi(double ki);
+  /**
+   * Accessor to frequency scaling parameter, see mutator for details.
+   * @return scale denominator d of term 1/d x 500kHz
+   */
+  unsigned short getFrequencyScale();
 
-    /**
-     * Accessor to integration factor of PID controller
-     * @return integration factor
-     */
-    double getKi();
+  /**
+   * Accessor to pulse width limit, see mutator for details.
+   * @return pulse width limit
+   */
+  unsigned char getMaxPulseWidth();
 
-    /**
-     * Set differential factor of PID controller
-     * @param[in] kd differential factor
-     * @return success
-     */
-    bool setKd(double kd);
+  /**
+   * Set pulse width modulated signal
+   * @param[in] rpm pulse width in range [-100;100], this device supports 2 channels
+   * @return success
+   */
+  bool setPWM(int pwm[2]);
 
-    /**
-     * Accessor to differential factor of PID controller
-     * @return differential factor
-     */
-    double getKd();
+  /**
+   * Set motor revolutions per minute
+   * @param[in] rpm set point value, this device supports 2 channels
+   * @return success
+   */
+  bool setRPM(double rpm[2]);
 
-    /**
-     * Activate/Deactivate anti windup functionality of PID controller
-     * @param[in] activate activation==true, deactivation==false
-     * @return success
-     */
-    bool setAntiWindup(bool activate);
+  /**
+   * Get either motor revolutions per minute or motor position (encoder ticks). This depends on the configuration
+   * canResponseMode.
+   * @param[out] response revolutions per minute for motor 1 and 2 / position of motor 1 and 2. This is a modulo 2^15
+   * value.
+   */
+  void getWheelResponse(double response[2]);
 
-    /**
-     * Accessor to anti windup parameter of PID controller
-     * @return anti windup activation
-     */
-    bool getAntiWindup();
+  /**
+   * Set proportional factor of PID controller
+   * @param[in] kp proportional factor
+   * @return success
+   */
+  bool setKp(double kp);
 
-    /**
-     * Set weight of input filter. Input values f are filtered with f'=weight*f'+(1-weight)*f.
-     * @param[in] filtering weight. A value of 0 disables the filter. The value must be in the range of [0;1[
-     */
-    bool setInputWeight(double weight);
+  /**
+   * Accessor to proportional factor of PID controller
+   * @return proportional factor
+   */
+  double getKp();
 
-    /**
-     * Accessor to weight of input filter. See comments of mutator for more information.
-     * @return weight of input filter
-     */
-    double getInputWeight();
+  /**
+   * Set integration factor of PID controller
+   * @param[in] ki integration factor
+   * @return success
+   */
+  bool setKi(double ki);
 
-    /**
-     * Accessor to firmware version on the motorcontroller.
-     * @return firmware version
-     */
-    Version getFirmwareVersion();
+  /**
+   * Accessor to integration factor of PID controller
+   * @return integration factor
+   */
+  double getKi();
 
-    /**
-     * Stop motors
-     */
-    void stop();
+  /**
+   * Set differential factor of PID controller
+   * @param[in] kd differential factor
+   * @return success
+   */
+  bool setKd(double kd);
 
-  protected:
-  private:
-  
-    /**
-     * Initialize motor controllers (adjust parameters)
-     **/
-    void init();
-    
-    bool sendFloat(int cmd, float f);
+  /**
+   * Accessor to differential factor of PID controller
+   * @return differential factor
+   */
+  double getKd();
 
-    bool sendFloat(int cmd, float f, int channel);
+  /**
+   * Activate/Deactivate anti windup functionality of PID controller
+   * @param[in] activate activation==true, deactivation==false
+   * @return success
+   */
+  bool setAntiWindup(bool activate);
 
-    bool requestFirmwareVersion(std::chrono::milliseconds timeout = 100ms);
+  /**
+   * Accessor to anti windup parameter of PID controller
+   * @return anti windup activation
+   */
+  bool getAntiWindup();
 
-    /**
-     * Implementation of inherited method from SocketCANObserver. This class is getting notified by the SocketCAN,
-     * as soon as messages of interest arrive (having the desired CAN ID).
-     * @param[in] frame CAN frame
-     */
-    void notify(struct can_frame *frame);
+  /**
+   * Set weight of input filter. Input values f are filtered with f'=weight*f'+(1-weight)*f.
+   * @param[in] filtering weight. A value of 0 disables the filter. The value must be in the range of [0;1[
+   */
+  bool setInputWeight(double weight);
 
-    using Mutex = std::mutex;
-    using LockGuard = std::lock_guard<Mutex>;
+  /**
+   * Accessor to weight of input filter. See comments of mutator for more information.
+   * @return weight of input filter
+   */
+  double getInputWeight();
 
-    static constexpr double  FIXED_POINT_FACTOR = 100.0;
+  /**
+   * Accessor to firmware version on the motorcontroller.
+   * @return firmware version
+   */
+  Version getFirmwareVersion();
 
-    SocketCAN *_can;
+  /**
+   * Stop motors
+   */
+  void stop();
 
-    int32_t _inputAddress;
+protected:
+private:
+  /**
+   * Initialize motor controllers (adjust parameters)
+   **/
+  void init();
 
-    int32_t _outputAddress;
+  bool sendFloat(int cmd, float f);
 
-    int32_t _broadcastAddress;
+  bool sendFloat(int cmd, float f, int channel);
 
-    can_frame _cf;
+  bool requestFirmwareVersion(std::chrono::milliseconds timeout = 100ms);
 
-    ControllerParams _params;
+  /**
+   * Implementation of inherited method from SocketCANObserver. This class is getting notified by the SocketCAN,
+   * as soon as messages of interest arrive (having the desired CAN ID).
+   * @param[in] frame CAN frame
+   */
+  void notify(struct can_frame* frame);
 
-    bool _isInit;
+  using Mutex     = std::mutex;
+  using LockGuard = std::lock_guard<Mutex>;
 
-    double _rpm[2];
+  static constexpr double FIXED_POINT_FACTOR = 100.0;
 
-    short _pos[2];
+  SocketCAN* _can;
 
-    bool _enabled;
+  int32_t _inputAddress;
 
-    bool _verbosity;
+  int32_t _outputAddress;
 
-    long _seconds;
+  int32_t _broadcastAddress;
 
-    long _usec;
+  can_frame _cf;
 
-    Version _version;
+  ControllerParams _params;
 
-    mutable Mutex _stateMutex;
-  };
+  bool _isInit;
 
-}
+  double _rpm[2];
+
+  short _pos[2];
+
+  bool _enabled;
+
+  bool _verbosity;
+
+  long _seconds;
+
+  long _usec;
+
+  Version _version;
+
+  mutable Mutex _stateMutex;
+};
+
+} // namespace edu

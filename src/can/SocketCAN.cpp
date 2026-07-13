@@ -1,12 +1,11 @@
 #include "SocketCAN.h"
 
-#include <fcntl.h>
-#include <net/if.h>
-#include <unistd.h>
-#include <sys/ioctl.h>
-
-#include <iostream>
 #include <cstring>
+#include <fcntl.h>
+#include <iostream>
+#include <net/if.h>
+#include <sys/ioctl.h>
+#include <unistd.h>
 
 using namespace std::chrono_literals;
 using LockGuard = std::lock_guard<std::mutex>;
@@ -14,15 +13,15 @@ using LockGuard = std::lock_guard<std::mutex>;
 namespace edu
 {
 
-SocketCAN::SocketCAN(std::string devFile) :
-  _soc(-1),
-  _listenerIsRunning(false),
-  _shutDownListener(false),
-  _portOpen(false),
-  _next_time(std::chrono::steady_clock::now())
+SocketCAN::SocketCAN(std::string devFile)
+  : _soc(-1)
+  , _listenerIsRunning(false)
+  , _shutDownListener(false)
+  , _portOpen(false)
+  , _next_time(std::chrono::steady_clock::now())
 {
   _portOpen = openPort(devFile.c_str());
-  if(!_portOpen)
+  if (!_portOpen)
     std::cout << "ERROR: Cannot open CAN device interface: " << devFile << std::endl;
 }
 
@@ -45,13 +44,14 @@ void SocketCAN::clearObservers()
   _observers.clear();
 }
 
-bool SocketCAN::openPort(const char *port)
+bool SocketCAN::openPort(const char* port)
 {
   struct ifreq ifr;
   struct sockaddr_can addr;
 
   _soc = socket(PF_CAN, SOCK_RAW, CAN_RAW);
-  if(_soc < 0) return false;
+  if (_soc < 0)
+    return false;
 
   addr.can_family = AF_CAN;
   std::strcpy(ifr.ifr_name, port);
@@ -67,7 +67,7 @@ bool SocketCAN::openPort(const char *port)
 
   fcntl(_soc, F_SETFL, O_NONBLOCK);
 
-  if (bind(_soc, (struct sockaddr *)&addr, sizeof(addr)) < 0)
+  if (bind(_soc, (struct sockaddr*)&addr, sizeof(addr)) < 0)
   {
     close(_soc);
     _soc = -1;
@@ -90,7 +90,8 @@ bool SocketCAN::send(struct can_frame* frame)
   }
   if (retval != sizeof(struct can_frame))
   {
-    std::cout << "Can transmission error for command " << (int)(frame->data[0]) << ", returned " << retval << " submitted bytes instead of " << sizeof(struct can_frame) << std::endl;
+    std::cout << "Can transmission error for command " << (int)(frame->data[0]) << ", returned " << retval
+              << " submitted bytes instead of " << sizeof(struct can_frame) << std::endl;
     return false;
   }
 
@@ -99,12 +100,13 @@ bool SocketCAN::send(struct can_frame* frame)
 
 bool SocketCAN::startListener(int timeout_ms)
 {
-  if(!_portOpen || _listenerIsRunning) return false;
+  if (!_portOpen || _listenerIsRunning)
+    return false;
 
   _thread = std::make_unique<std::thread>(&SocketCAN::listener, this);
 
   int watchdog = 0;
-  while(!_listenerIsRunning && (watchdog < timeout_ms))
+  while (!_listenerIsRunning && (watchdog < timeout_ms))
   {
     std::this_thread::sleep_for(1ms);
     watchdog += 1;
@@ -115,18 +117,18 @@ bool SocketCAN::startListener(int timeout_ms)
 
 bool SocketCAN::listener()
 {
-  _shutDownListener  = false;
+  _shutDownListener = false;
 
   struct can_frame frame_rd;
   int recvbytes = 0;
 
-  struct timeval timeout = {0, 100};
+  struct timeval timeout = { 0, 100 };
   fd_set readSet;
 
   std::cout << "CAN listener start" << std::endl;
 
   _listenerIsRunning = true;
-  while(!_shutDownListener)
+  while (!_shutDownListener)
   {
     FD_ZERO(&readSet);
 
@@ -138,9 +140,9 @@ bool SocketCAN::listener()
         if (FD_ISSET(_soc, &readSet))
         {
           recvbytes = read(_soc, &frame_rd, sizeof(struct can_frame));
-          if(recvbytes)
+          if (recvbytes)
           {
-            for(auto observer : _observers)
+            for (auto observer : _observers)
             {
               observer->forwardNotification(&frame_rd);
             }
@@ -162,7 +164,7 @@ void SocketCAN::stopListener()
 {
   _shutDownListener = true;
 
-  if(_thread && _thread->joinable())
+  if (_thread && _thread->joinable())
   {
     _thread->join();
   }
@@ -171,12 +173,12 @@ void SocketCAN::stopListener()
 bool SocketCAN::closePort()
 {
   bool retval = false;
-  if(_soc >= 0)
+  if (_soc >= 0)
   {
-    retval = (close(_soc)==0);
-    _soc = -1;
+    retval = (close(_soc) == 0);
+    _soc   = -1;
   }
   return retval;
 }
 
-}
+} // namespace edu

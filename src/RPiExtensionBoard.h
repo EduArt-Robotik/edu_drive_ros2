@@ -20,42 +20,39 @@ public:
    * @param[in] params motor parameters
    * @param[in] verbosity verbosity output flag
    */
-  RPiExtensionBoard(SocketCAN* can, bool verbosity=false);
+  RPiExtensionBoard(SocketCAN* can, bool verbosity = false);
 
   /**
    * Destructor
    */
   ~RPiExtensionBoard();
-  
+
   /**
    * @brief Set angle of servo motors
    * @param[in] angle Desired angle, valid values: [0, 270]
    * @return success state of CAN transmission
    */
   bool setServos(double angles[8]);
-  
+
   /**
    * @brief Send enable state for visualization (LEDs)
    * @param[in] enabled joint enabled state of all motors
    * @return success state of CAN transmission
    */
   bool sendEnabledState(bool enabled);
-  
 
 private:
+  SocketCAN* _can;
 
-    SocketCAN*       _can;
+  can_frame _cf;
 
-    can_frame        _cf;
+  int32_t _inputAddress; // Input address (CAN ID) of extension board
 
-    int32_t          _inputAddress;     // Input address (CAN ID) of extension board
+  int32_t _outputAddress; // Output address (CAN ID) of extension board
 
-    int32_t          _outputAddress;    // Output address (CAN ID) of extension board
+  int32_t _broadcastAddress; // Broadcast address for the distribution of CAN data to multiple nodes
 
-    int32_t          _broadcastAddress; // Broadcast address for the distribution of CAN data to multiple nodes
-    
-    bool             _verbosity;        // Set this flag to true via the Constructor to get information via cout
-    
+  bool _verbosity; // Set this flag to true via the Constructor to get information via cout
 };
 
-}
+} // namespace edu

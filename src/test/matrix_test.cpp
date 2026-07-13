@@ -1,5 +1,6 @@
-#include "../Matrix.h"
 #include <iostream>
+
+#include "../Matrix.h"
 
 /**
  * @brief Simple test program to check functionality of Matrix class.
@@ -11,40 +12,42 @@
  * @author Stefan May
  * @date 30.1.2025
  */
-int main ()
+int main()
 {
-  double r = 0.1;
-  double lx = 0.3;
-  double ly = 0.25;
-  double fy = 1.0; // factor for y dimension (fy=1: mecanum, fy=0: skid)
-  edu::Mat K = { { 1 / r, -fy / r, -(lx + ly) / r },
-                 { -1 / r, -fy / r, -(lx + ly) / r },
-                 { 1 / r, fy / r, -(lx + ly) / r },
-                 { -1 / r, fy / r, -(lx + ly) / r },
-                 { 1 / r, -fy / r, -(ly + lx / 2) / r },
-                 { -1 / r, -fy / r, -(ly + lx / 2) / r },
-                 { 1 / r, fy / r, -(ly + lx / 2) / r },
-                 { -1 / r, fy / r, -(ly + lx / 2) / r } };
-  edu::Matrix A (K);
-  A.print ("A =");
-  edu::Matrix At = A.transposed ();
-  At.print ("A' =");
+  double r   = 0.1;
+  double lx  = 0.3;
+  double ly  = 0.25;
+  double fy  = 1.0; // factor for y dimension (fy=1: mecanum, fy=0: skid)
+  edu::Mat K = {
+    { 1 / r,  -fy / r, -(lx + ly) / r     },
+    { -1 / r, -fy / r, -(lx + ly) / r     },
+    { 1 / r,  fy / r,  -(lx + ly) / r     },
+    { -1 / r, fy / r,  -(lx + ly) / r     },
+    { 1 / r,  -fy / r, -(ly + lx / 2) / r },
+    { -1 / r, -fy / r, -(ly + lx / 2) / r },
+    { 1 / r,  fy / r,  -(ly + lx / 2) / r },
+    { -1 / r, fy / r,  -(ly + lx / 2) / r }
+  };
+  edu::Matrix A(K);
+  A.print("A =");
+  edu::Matrix At = A.transposed();
+  At.print("A' =");
   edu::Matrix AtA = At * A;
-  AtA.print ("A'A =");
+  AtA.print("A'A =");
   std::cout << "det(AtA)=" << AtA.determinant() << std::endl << std::endl;
-  edu::Matrix B = AtA.inverse ();
-  B.print ("inv(A'A) =");
+  edu::Matrix B = AtA.inverse();
+  B.print("inv(A'A) =");
 
   // C is the inverted robot kinematics (step-by-step calculation)
   edu::Matrix C = B * At;
-  C.print ("inv(A'A)A' =");
+  C.print("inv(A'A)A' =");
 
   // D is the inverted robot kinematics
-  edu::Matrix D = A.pseudoInverse ();
-  D.print ("pinv(A)");
+  edu::Matrix D = A.pseudoInverse();
+  D.print("pinv(A)");
 
   // Test vector
-  edu::Vec v (A.rows (), 1);
+  edu::Vec v(A.rows(), 1);
 
   edu::Vec vTwist = D * v;
   std::cout << "vx=" << vTwist[0] << std::endl;

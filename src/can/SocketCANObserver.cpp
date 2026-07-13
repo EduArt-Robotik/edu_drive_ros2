@@ -5,8 +5,8 @@ namespace edu
 
 namespace
 {
-using SteadyClock = std::chrono::steady_clock;
-using Nanoseconds = std::chrono::nanoseconds;
+using SteadyClock                   = std::chrono::steady_clock;
+using Nanoseconds                   = std::chrono::nanoseconds;
 static constexpr std::int64_t MS2NS = 1000000;
 
 std::int64_t nowNs()
@@ -15,16 +15,14 @@ std::int64_t nowNs()
 }
 } // namespace
 
-SocketCANObserver::SocketCANObserver() :
-  _canid(0x0),
-  _last_msg_stamp_ns(nowNs())
+SocketCANObserver::SocketCANObserver()
+  : _canid(0x0)
+  , _last_msg_stamp_ns(nowNs())
 {
-  
 }
 
 SocketCANObserver::~SocketCANObserver()
 {
-
 }
 
 void SocketCANObserver::setCANId(canid_t canid)
@@ -39,7 +37,7 @@ canid_t SocketCANObserver::getCANId()
 
 void SocketCANObserver::forwardNotification(struct can_frame* frame)
 {
-  if(frame->can_id == _canid)
+  if (frame->can_id == _canid)
   {
     _last_msg_stamp_ns.store(nowNs(), std::memory_order_relaxed);
     notify(frame);
@@ -48,10 +46,10 @@ void SocketCANObserver::forwardNotification(struct can_frame* frame)
 
 bool SocketCANObserver::checkConnectionStatus(unsigned int timeout_ms)
 {
-  auto now_ns = nowNs();
-  auto last_ns = _last_msg_stamp_ns.load(std::memory_order_relaxed);
+  auto now_ns     = nowNs();
+  auto last_ns    = _last_msg_stamp_ns.load(std::memory_order_relaxed);
   auto timeout_ns = static_cast<std::int64_t>(timeout_ms) * MS2NS;
   return (now_ns - last_ns) < timeout_ns;
 }
 
-}
+} // namespace edu

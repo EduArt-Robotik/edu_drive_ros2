@@ -1,12 +1,7 @@
 #pragma once
 
-#include "CommandMultiplexer.h"
-#include "JoystickInputHandler.h"
-#include "MotorController.h"
-#include "Odometry.h"
-#include "PowerManagementBoard.h"
-#include "RPiAdapterBoard.h"
-#include "RPiExtensionBoard.h"
+#include <memory>
+#include <vector>
 
 #include "geometry_msgs/msg/twist.hpp"
 #include "rclcpp/publisher.hpp"
@@ -19,10 +14,16 @@
 #include "std_srvs/srv/set_bool.hpp"
 #include "tf2_ros/transform_broadcaster.h"
 
-#include <memory>
-#include <vector>
+#include "CommandMultiplexer.h"
+#include "JoystickInputHandler.h"
+#include "MotorController.h"
+#include "Odometry.h"
+#include "PowerManagementBoard.h"
+#include "RPiAdapterBoard.h"
+#include "RPiExtensionBoard.h"
 
-namespace edu {
+namespace edu
+{
 
 /**
  * @class EduDrive
@@ -30,7 +31,8 @@ namespace edu {
  * @author Stefan May
  * @date 27.04.2022
  */
-class EduDrive : public rclcpp::Node {
+class EduDrive : public rclcpp::Node
+{
 public:
   /**
    * @brief Constructor
@@ -48,10 +50,13 @@ public:
    * @brief Initialize drive
    * @param[in] cp Parameters for the closed-loop controller of all motor channels
    * @param[in] can Instance of CAN communication socket. All connected devices share the communication bus.
-   * @param[in] using_pwr_mgmt Flag indicating whether the power management module of EduArt is used. This enables additional measurement topics(voltage and current sensing).
+   * @param[in] using_pwr_mgmt Flag indicating whether the power management module of EduArt is used. This enables
+   * additional measurement topics(voltage and current sensing).
    * @param[in] verbosity Make the instance of this class more chatty. Debug information will be printed to stdout.
    */
-  void initDrive(std::vector<ControllerParams> cp, std::shared_ptr<SocketCAN> can, const JoystickInputHandler::JoystickMap &joystickMap, bool using_pwr_mgmt = true, bool verbosity = false);
+  void initDrive(
+    std::vector<ControllerParams> cp, std::shared_ptr<SocketCAN> can,
+    const JoystickInputHandler::JoystickMap& joystickMap, bool using_pwr_mgmt = true, bool verbosity = false);
 
   /**
    * @brief Blocking ROS handler method. Call this method to enter the ROS
@@ -81,30 +86,28 @@ public:
   void velocityCallback(const geometry_msgs::msg::Twist::SharedPtr cmd);
 
 private:
-  static constexpr double RADS2RPM = 60.0 / (2.0 * M_PI);
-  static constexpr double RPM2RADS = (2.0 * M_PI) / 60.0;
-  static constexpr unsigned int MOTOR_CHANNELS = 2;
+  static constexpr double RADS2RPM                    = 60.0 / (2.0 * M_PI);
+  static constexpr double RPM2RADS                    = (2.0 * M_PI) / 60.0;
+  static constexpr unsigned int MOTOR_CHANNELS        = 2;
   static constexpr unsigned int KINEMATIC_VECTOR_SIZE = 3;
 
   void hardwareWorker();
 
   void checkLaggyConnection();
 
-  int gpio_write(const char *dev_name, int offset, int value);
+  int gpio_write(const char* dev_name, int offset, int value);
 
-  int gpio_read(const char *dev_name, int offset, int &value);
+  int gpio_read(const char* dev_name, int offset, int& value);
 
   void controlMotors(double vFwd, double vLeft, double omega);
 
   bool enableCallback(
-      const std::shared_ptr<rmw_request_id_t> header,
-      const std::shared_ptr<std_srvs::srv::SetBool_Request> request,
-      const std::shared_ptr<std_srvs::srv::SetBool_Response> response);
+    const std::shared_ptr<rmw_request_id_t> header, const std::shared_ptr<std_srvs::srv::SetBool_Request> request,
+    const std::shared_ptr<std_srvs::srv::SetBool_Response> response);
 
-    bool resetOdometryCallback(
-      const std::shared_ptr<rmw_request_id_t> header,
-      const std::shared_ptr<std_srvs::srv::SetBool_Request> request,
-      const std::shared_ptr<std_srvs::srv::SetBool_Response> response);
+  bool resetOdometryCallback(
+    const std::shared_ptr<rmw_request_id_t> header, const std::shared_ptr<std_srvs::srv::SetBool_Request> request,
+    const std::shared_ptr<std_srvs::srv::SetBool_Response> response);
 
   // Input topics / services
   rclcpp::Subscription<sensor_msgs::msg::Joy>::SharedPtr _subJoy;
@@ -131,15 +134,14 @@ private:
   // Input logic
   CommandMultiplexer _commandMultiplexer;
   std::unique_ptr<JoystickInputHandler> _joystickInput;
-  
 
   rclcpp::Time _lastCmd;           // Time elapsed since last call
   std::shared_ptr<SocketCAN> _can; // Pointer to CAN instance
 
-  std::unique_ptr<Odometry> _odometry;             // Odometry model of robot
-  std::unique_ptr<RPiAdapterBoard> _adapter;       // Adapter board
-  std::unique_ptr<RPiExtensionBoard> _extension;   // Extension board
-  std::unique_ptr<PowerManagementBoard> _pwr_mgmt; // Power management board
+  std::unique_ptr<Odometry> _odometry;               // Odometry model of robot
+  std::unique_ptr<RPiAdapterBoard> _adapter;         // Adapter board
+  std::unique_ptr<RPiExtensionBoard> _extension;     // Extension board
+  std::unique_ptr<PowerManagementBoard> _pwr_mgmt;   // Power management board
   std::vector<std::unique_ptr<MotorController>> _mc; // Vector containing pointer to all motor controller instances
 
   double _vMax;
