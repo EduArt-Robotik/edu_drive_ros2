@@ -13,7 +13,7 @@
     responseMode: 0
 
     controllers: 2
-    
+
     controller0:
       canID: 0
       drive0: #front right

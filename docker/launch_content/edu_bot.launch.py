@@ -11,9 +11,8 @@ def generate_launch_description():
    
     package_path = FindPackageShare('edu_drive_ros2')
     parameter_file = PathJoinSubstitution([
-      package_path,
-      'parameter',
-      'edu_drive_edu_bot.yaml'
+      '.',
+      'edu_bot.yaml'
     ])
 
     edu_drive = Node(
@@ -21,8 +20,7 @@ def generate_launch_description():
       executable='edu_drive_ros2_node',
       name='edu_drive_ros2_node',
       parameters=[parameter_file],
-      #prefix=['gdbserver localhost:3210'],
-      #namespace=os.environ.get('EDU_ROBOT_NAMESPACE', "eduard"),
+      namespace=EnvironmentVariable('EDU_ROBOT_NAMESPACE', default_value="eduard"),
       output='screen'
     )  
     
