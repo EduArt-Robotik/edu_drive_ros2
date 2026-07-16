@@ -1,7 +1,9 @@
 #pragma once
 
+#include <chrono>
 #include <memory>
 #include <vector>
+#include <string_view>
 
 #include "geometry_msgs/msg/twist.hpp"
 #include "rclcpp/publisher.hpp"
@@ -91,6 +93,11 @@ private:
   static constexpr unsigned int MOTOR_CHANNELS        = 2;
   static constexpr unsigned int KINEMATIC_VECTOR_SIZE = 3;
 
+  static constexpr std::string_view ODOM_FRAME_ID = "odom";
+  static constexpr std::string_view BASE_FRAME_ID = "base_link";
+
+  static constexpr std::chrono::milliseconds ODOM_PUBLISH_INTERVAL = 10ms;
+
   void hardwareWorker();
 
   void checkLaggyConnection();
@@ -100,6 +107,8 @@ private:
   int gpio_read(const char* dev_name, int offset, int& value);
 
   void controlMotors(double vFwd, double vLeft, double omega);
+
+  void odomTimerCallback();
 
   bool enableCallback(
     const std::shared_ptr<rmw_request_id_t> header, const std::shared_ptr<std_srvs::srv::SetBool_Request> request,
@@ -130,6 +139,7 @@ private:
 
   // Odometry
   std::unique_ptr<tf2_ros::TransformBroadcaster> _tf_broadcaster;
+  rclcpp::TimerBase::SharedPtr _odomTimer;
 
   // Input logic
   CommandMultiplexer _commandMultiplexer;

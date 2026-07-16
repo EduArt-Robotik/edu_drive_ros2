@@ -107,6 +107,7 @@ void EduDrive::initDrive(
 
   // Broadcaster for odometry data
   _tf_broadcaster = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
+  _odomTimer = create_wall_timer(ODOM_PUBLISH_INTERVAL, std::bind(&EduDrive::odomTimerCallback, this));
 
   // Subscribers last after everything else is initialized, to avoid receiving messages before the robot is ready
   _subJoy = this->create_subscription<sensor_msgs::msg::Joy>(
@@ -253,6 +254,29 @@ bool EduDrive::enableCallback(
   return true;
 }
 
+void EduDrive::odomTimerCallback(){
+  if(!_odometry || !(_odometry->is_pos_init() || _odometry->is_vel_init()))
+    return;
+
+  Pose pose                    = _odometry->get_pose();
+
+  geometry_msgs::msg::TransformStamped msgTransform;
+  msgTransform.header.stamp    = this->get_clock()->now();
+  msgTransform.header.frame_id = ODOM_FRAME_ID;
+  msgTransform.child_frame_id  = BASE_FRAME_ID;
+
+  tf2::Quaternion q_odom;
+  q_odom.setEuler(0, 0, pose.theta);
+  msgTransform.transform.translation.x = pose.x;
+  msgTransform.transform.translation.y = pose.y;
+  msgTransform.transform.translation.z = 0;
+  msgTransform.transform.rotation.w    = q_odom.w();
+  msgTransform.transform.rotation.x    = q_odom.x();
+  msgTransform.transform.rotation.y    = q_odom.y();
+  msgTransform.transform.rotation.z    = q_odom.z();
+  _tf_broadcaster->sendTransform(msgTransform);
+}
+
 bool EduDrive::resetOdometryCallback(
   const std::shared_ptr<rmw_request_id_t> header, const std::shared_ptr<std_srvs::srv::SetBool_Request> request,
   const std::shared_ptr<std_srvs::srv::SetBool_Response> response)
@@ -331,7 +355,6 @@ void EduDrive::hardwareWorker()
 
   std_msgs::msg::Float32MultiArray msgRPM;
   std_msgs::msg::ByteMultiArray msgEnabled;
-  geometry_msgs::msg::TransformStamped msgTransform;
 
   bool controllersInitialized = true;
   for (auto& mc : _mc)
@@ -387,22 +410,6 @@ void EduDrive::hardwareWorker()
   rclcpp::Time stampReceived = this->get_clock()->now();
   _odometry->update(stampReceived.nanoseconds(), edu::Vec(msgRPM.data.begin(), msgRPM.data.end()));
 
-  Pose pose                    = _odometry->get_pose();
-  msgTransform.header.stamp    = stampReceived;
-  msgTransform.header.frame_id = "odom";
-  msgTransform.child_frame_id  = "base_link";
-
-  tf2::Quaternion q_odom;
-  q_odom.setEuler(0, 0, pose.theta);
-  msgTransform.transform.translation.x = pose.x;
-  msgTransform.transform.translation.y = pose.y;
-  msgTransform.transform.translation.z = 0;
-  msgTransform.transform.rotation.w    = q_odom.w();
-  msgTransform.transform.rotation.x    = q_odom.x();
-  msgTransform.transform.rotation.y    = q_odom.y();
-  msgTransform.transform.rotation.z    = q_odom.z();
-  _tf_broadcaster->sendTransform(msgTransform);
-
   _pubRPM->publish(msgRPM);
   _pubEnabled->publish(msgEnabled);
 
@@ -420,7 +427,7 @@ void EduDrive::hardwareWorker()
   _adapter->getAngularVelocity(v);
   sensor_msgs::msg::Imu msgImu;
   msgImu.header.stamp          = stampReceived;
-  msgImu.header.frame_id       = "base_link";
+  msgImu.header.frame_id       = BASE_FRAME_ID;
   msgImu.orientation.w         = q[0];
   msgImu.orientation.x         = q[1];
   msgImu.orientation.y         = q[2];
