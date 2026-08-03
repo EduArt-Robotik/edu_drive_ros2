@@ -131,7 +131,7 @@ This bug leads to a segmentation fault during the boot process.
 However, this bug has already been recognized and is already in the list of proposed fixes for version 24.04.1 LTS.
 It is also to be expected that this problem will be solved from version 24.04.2 LTS.
 To install the proposed kernel, these sources must be activated for the package manager.
-Therefore, in the file `/etc/apt/sources.list.d/ubuntu.sources`, add the entry `noble-proposed` so that the suites are defined as follows:
+Therefore, in the file **`/etc/apt/sources.list.d/ubuntu.sources`**, add the entry `noble-proposed` so that the suites are defined as follows:
 `Suites: noble noble-updates noble-backports noble-proposed`
 The kernel can then be installed:
 ```bash
@@ -156,7 +156,7 @@ sudo bash -c "echo -e '\ndtoverlay=spi1-2cs\ndtoverlay=mcp251xfd,spi0-0,oscillat
    
 The extension board for the Raspberry Pi provides three CANFD interfaces.
 To ensure that the naming of the interfaces is the same after each boot process, a udev rule must be created in the /etc/udev/rules.d directory.
-Create the file /etc/udev/rules.d/42-mcp251xfd.rules with the following content:
+Create the file **/etc/udev/rules.d/42-mcp251xfd.rules** with the following content:
 ```bash
 KERNELS=="spi0.0", SUBSYSTEMS=="spi", DRIVERS=="mcp251xfd", ACTION=="add", NAME="CAN0", TAG+="systemd", ENV{SYSTEMD_WANTS}="can0-attach.service"
 KERNELS=="spi0.1", SUBSYSTEMS=="spi", DRIVERS=="mcp251xfd", ACTION=="add", NAME="CAN1", TAG+="systemd", ENV{SYSTEMD_WANTS}="can1-attach.service"
@@ -165,20 +165,20 @@ KERNELS=="spi1.0", SUBSYSTEMS=="spi", DRIVERS=="mcp251xfd", ACTION=="add", NAME=
 In this way, the CAN interface for the motor controllers is always named CAN2.
 The CAN0 and CAN1 interfaces can be accessed via the sockets on the expansion board (see labeling on the board) and are intended for connecting the flexible sensor ring from EduArt.
 Please note that these entries require the definition of three systemd services.
-Create the file /etc/systemd/system/can0-attach.service with the following content.
+Create the file **/etc/systemd/system/can0-attach.service** with the following content.
 ```bash
 [Service]
 Type=oneshot
 ExecStart=ip link set CAN0 up type can bitrate 1000000 dbitrate 1000000 fd on
 ```
-... then, the file /etc/systemd/system/can1-attach.service
+... then, the file **/etc/systemd/system/can1-attach.service**
 ```bash
 [Service]
 Type=oneshot
 ExecStart=ip link set CAN1 up type can bitrate 1000000 dbitrate 1000000 fd on
 ```
 
-... and finally the file /etc/systemd/system/can2-attach.service
+... and finally the file **/etc/systemd/system/can2-attach.service**
 ```bash
 [Service]
 Type=oneshot
