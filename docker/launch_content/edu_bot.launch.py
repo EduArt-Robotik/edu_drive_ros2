@@ -23,7 +23,23 @@ def generate_launch_description():
       namespace=EnvironmentVariable('EDU_ROBOT_NAMESPACE', default_value="eduard"),
       output='screen'
     )  
+
+    joy_node = Node(
+      package='joy_linux',
+      executable='joy_linux_node',
+      name='joy_linux_node',
+      namespace=EnvironmentVariable('EDU_ROBOT_NAMESPACE', default_value="eduard"),
+      output='screen',
+      parameters=[{
+          'autorepeat_rate': 25.0,
+          #'dev_name': '/dev/input/js0'
+      }],
+      remappings=[
+          ('joy', 'joy')
+      ]
+    )
     
     return LaunchDescription([
-        edu_drive
+        edu_drive,
+        joy_node
     ])

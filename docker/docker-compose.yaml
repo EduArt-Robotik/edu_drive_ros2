@@ -6,6 +6,8 @@ services:
         image: edu_drive_ros2
         container_name: edu_drive_ros2-0.1.0
         user: user
+        group_add:
+          - "102" # Add container user to input device group for joystick access. Find joystick group with `stat -c '%g' /dev/input/js0`.
         restart: always
         privileged: true
         ipc: host
@@ -16,10 +18,9 @@ services:
             - RMW_IMPLEMENTATION=${RMW_IMPLEMENTATION}
             - ROS_DOMAIN_ID=${ROS_DOMAIN_ID}
         network_mode: "host"
-        command: bash -c 'cd /home/user/ros/launch_content; ros2 launch edu_drive_edu_bot.launch.py'
+        command: bash -c 'cd /home/user/ros/launch_content; ros2 launch edu_bot.launch.py'
         # command: /bin/bash
         # stdin_open: true
         volumes:
             - './launch_content:/home/user/ros/launch_content'
-        #devices:
-        #    - '/dev:/dev'
+            - '/dev/input:/dev/input' # Needs to be mounted as volume to work when joystick is started after the container. Mounting as device does not work in this case.

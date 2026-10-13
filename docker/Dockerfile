@@ -8,6 +8,11 @@ USER root
 RUN apt-get update \
     && apt-get install -y software-properties-common build-essential git
 
+RUN apt-get update \
+    && apt-get install -y ros-$ROS_DISTRO-joy ros-$ROS_DISTRO-joy-linux
+
+RUN apt-get clean && rm -rf /var/lib/apt/lists/*
+
 USER $USER
 
 # set up ros workspace
